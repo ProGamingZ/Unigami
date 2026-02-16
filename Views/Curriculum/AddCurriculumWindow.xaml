@@ -1,0 +1,68 @@
+<Window x:Class="UniversityScheduler.Views.AddCurriculumWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Manage Curriculum Entry" Height="450" Width="450" WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip"
+        Icon="/UNIGAMIicon128.ico">
+    <Border Padding="20" Background="#F7F9F9">
+        <StackPanel>
+            <TextBlock Text="Curriculum Entry" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,20"/>
+
+            <StackPanel Margin="0,0,0,15">
+                <TextBlock Text="Program (e.g., BSCS):"/>
+                <ComboBox x:Name="ProgramCombo" Height="30" IsEditable="True" SelectedIndex="0">
+                    <ComboBoxItem Content="BSCS"/>
+                    <ComboBoxItem Content="BSIT"/>
+                    <ComboBoxItem Content="BSIS"/>
+                    <ComboBoxItem Content="BSEMC"/>
+                </ComboBox>
+            </StackPanel>
+
+            <Grid Margin="0,0,0,15">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="Year Level:"/>
+                    <ComboBox x:Name="YearCombo" Height="30" SelectedIndex="0">
+                        <ComboBoxItem Content="1st Year" Tag="1"/>
+                        <ComboBoxItem Content="2nd Year" Tag="2"/>
+                        <ComboBoxItem Content="3rd Year" Tag="3"/>
+                        <ComboBoxItem Content="4th Year" Tag="4"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Semester:"/>
+                    <ComboBox x:Name="SemesterCombo" Height="30" SelectedIndex="0">
+                        <ComboBoxItem Content="1st Semester" Tag="1"/>
+                        <ComboBoxItem Content="2nd Semester" Tag="2"/>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Margin="0,0,0,5">
+                <TextBlock Text="Select Course:"/>
+                <ComboBox x:Name="CourseCombo" 
+                          Height="30" 
+                          DisplayMemberPath="FullDisplay" 
+                          SelectedValuePath="Id"
+                          IsEditable="True"
+                          StaysOpenOnEdit="True"
+                          IsTextSearchEnabled="True"
+                          TextSearch.TextPath="FullDisplay"/>
+                <TextBlock Text="Type to search course code or name" FontSize="10" Foreground="Gray" Margin="2,0,0,0"/>
+            </StackPanel>
+
+            <Border Background="White" BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,15,0,20">
+                <StackPanel>
+                    <TextBlock Text="Entry Preview:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="PreviewTxt" Text="Select options to see preview..." Foreground="Gray" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <Button Content="Save Entry" Style="{StaticResource PrimaryButton}" Height="35" Click="Save_Click"/>
+        </StackPanel>
+    </Border>
+</Window>

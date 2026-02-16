@@ -1,0 +1,68 @@
+<UserControl x:Class="UniversityScheduler.Views.CurriculumManagerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="900">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="250"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="Curriculum Management" FontSize="24" FontWeight="Bold" Foreground="{StaticResource SidebarBrush}" VerticalAlignment="Center"/>
+
+            <Border Grid.Column="1" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1" CornerRadius="4" Background="White" Height="35">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="35"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="🔍" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray"/>
+                    <TextBox x:Name="SearchTxt" 
+                             Grid.Column="1"
+                             BorderThickness="0" 
+                             VerticalContentAlignment="Center"
+                             Background="Transparent"
+                             TextChanged="SearchTxt_TextChanged"
+                             ToolTip="Search by Program, Course Code, or Year"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <DataGrid x:Name="CurriculumGrid" 
+                  Grid.Row="1" 
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False" 
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  BorderBrush="{StaticResource TableLineBrush}"
+                  HorizontalGridLinesBrush="{StaticResource TextLightBrush}"
+                  VerticalGridLinesBrush="{StaticResource TextLightBrush}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Program" Binding="{Binding Program}" Width="100" FontWeight="SemiBold"/>
+                <DataGridTextColumn Header="Year" Binding="{Binding YearLevel}" Width="60"/>
+                <DataGridTextColumn Header="Sem" Binding="{Binding Semester}" Width="60"/>
+                <DataGridTextColumn Header="Course Code" Binding="{Binding Course.Code}" Width="100" FontWeight="Bold" Foreground="{StaticResource SidebarBrush}"/>
+                <DataGridTextColumn Header="Descriptive Title" Binding="{Binding Course.Name}" Width="*"/>
+                <DataGridTextColumn Header="Units" Binding="{Binding Course.Units}" Width="60"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Reset All" Width="100" Height="35" Margin="0,0,10,0" Style="{StaticResource DangerButton}" Click="Reset_Click"/>
+            
+            <Button Content="Edit Entry" Style="{StaticResource SecondaryButton}" Width="140" Height="35" Margin="0,0,10,0" Click="Edit_Click"/>
+            <Button Content="Remove Entry" Width="140" Height="35" Margin="0,0,10,0" Style="{StaticResource DangerButton}" Click="Delete_Click"/>
+            <Button Content="Add Curriculum" Style="{StaticResource PrimaryButton}" Width="140" Height="35" Click="Add_Click"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

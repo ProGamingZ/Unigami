@@ -1,0 +1,78 @@
+<Window x:Class="UniversityScheduler.Views.AddCourseWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Add New Course" Height="600" Width="500" WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip"
+        Icon="/UNIGAMIicon128.ico">
+    <Border Padding="20" Background="#F7F9F9">
+        <StackPanel>
+            <TextBlock Text="Course Details" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="Code:"/>
+                    <TextBox x:Name="CodeTxt" Height="30" ToolTip="e.g. CS101"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Descriptive Title:"/>
+                    <TextBox x:Name="NameTxt" Height="30"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                    <TextBlock Text="Units:"/>
+                    <TextBox x:Name="UnitsTxt" Height="30" Text="3"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="5,0,5,0">
+                    <TextBlock Text="Lec Hours:"/>
+                    <TextBox x:Name="LecTxt" Height="30" Text="3"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="5,0,0,0">
+                    <TextBlock Text="Lab Hours:"/>
+                    <TextBox x:Name="LabTxt" Height="30" Text="0"/>
+                </StackPanel>
+            </Grid>
+            
+            <StackPanel Margin="0,0,0,15">
+                <TextBlock Text="Recommended Programs (Check all that apply):" Margin="0,0,0,5"/>
+                <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Height="100">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="ProgramCheckList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding Name}" 
+                                              IsChecked="{Binding IsSelected}" 
+                                              Margin="10,5" 
+                                              Foreground="#2C3E50" 
+                                              FontSize="13"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+            </StackPanel>
+
+            <Separator Margin="0,10"/>
+
+            <TextBlock Text="Select Prerequisites (if any):" FontWeight="Bold" Margin="0,0,0,5"/>
+            <Border BorderBrush="#BDC3C7" BorderThickness="1" Height="150">
+                <ScrollViewer>
+                    <StackPanel x:Name="PrereqListPanel" Background="White">
+                        </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <Button Content="Save Course" Height="35" Style="{StaticResource PrimaryButton}" Margin="0,10,0,0" Click="Save_Click"/>
+        </StackPanel>
+    </Border>
+</Window>

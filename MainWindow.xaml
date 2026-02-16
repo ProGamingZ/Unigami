@@ -1,0 +1,684 @@
+﻿<Window x:Class="UniversityScheduler.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:UniversityScheduler.Views"
+        Title="UNIGAMI Main Window" Height="768" Width="1366"
+        WindowState="Maximized">
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> 
+            <RowDefinition Height="Auto"/>   
+            <RowDefinition Height="*"/>    
+        </Grid.RowDefinitions>
+
+
+
+        <Grid Grid.Row="0" Margin="10" Height="210">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/> <ColumnDefinition Width="15"/> 
+                <ColumnDefinition Width="2*"/> </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="75"/> <RowDefinition Height="*"/>  </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="{StaticResource SidebarBrush}" CornerRadius="8" Padding="5" Margin="0,0,0,5">
+                    <UniformGrid x:Name="SidebarGrid" Columns="5" Rows="2">
+                        <Button Content="Instructors" Click="OpenInstructorsWindow_Click" Style="{StaticResource SidebarButtonStyle}" Margin="3"/>
+                        <Button Content="Classes" Click="OpenClassesWindow_Click" Style="{StaticResource SidebarButtonStyle}" Margin="3"/>
+                        <Button Content="Curriculum" Click="OpenCurriculumWindow_Click" Style="{StaticResource SidebarButtonStyle}" Margin="3"/>
+                        <Button Content="Stats" Click="OpenStatsWindow_Click" Style="{StaticResource SidebarButtonStyle}" Margin="3"/>
+                        <Button x:Name="SemToggleButton" Content="Sem 1" Click="SemToggleButton_Click" Style="{StaticResource SidebarButtonStyle}" Margin="3"/>
+                        
+                        <Button Content="Courses" Click="OpenCoursesWindow_Click" Style="{StaticResource SidebarButtonStyle}" Margin="3"/>
+                        <Button Content="Rooms" Click="OpenRoomsWindow_Click" Style="{StaticResource SidebarButtonStyle}" Margin="3"/>
+                        <Button Content="Generate" Click="OpenGeneratorWindow_Click" Style="{StaticResource SidebarButtonStyle}" Margin="3"/>
+                        <Button Content="Settings" Click="OpenSettingsWindow_Click" Style="{StaticResource SidebarButtonStyle}" Margin="3"/>
+                        <Button x:Name="ActivateBtn" Content="Activate" Click="ActivateApp_Click" Style="{StaticResource SidebarButtonStyle}" Margin="3" Background="#F57C00" Foreground="#F5F5F5" ToolTip="Subscription Status: Checking..."/>
+                    </UniformGrid>
+                </Border>
+
+                <GroupBox x:Name="HealthGroup" Grid.Row="1" Header="Schedule Health" 
+                        BorderBrush="{StaticResource TextLightBrush}" 
+                        Foreground="{StaticResource InfoBrush}" 
+                        FontWeight="SemiBold">
+                    <TabControl BorderThickness="0" Background="Transparent">
+                        <TabControl.Resources>
+                            <ItemsPanelTemplate x:Key="WrapItemPanel">
+                                <WrapPanel Orientation="Horizontal" IsItemsHost="True"/>
+                            </ItemsPanelTemplate>
+
+                            <DataTemplate x:Key="AlertTemplate">
+                                <Border Background="{StaticResource BackgroundBrush1}" CornerRadius="4" Margin="2" Padding="5" 
+                                        BorderBrush="{StaticResource DangerBrush}" BorderThickness="3,0,0,3"
+                                        Width="180"> 
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13" 
+                                                    Foreground="{StaticResource TextDarkBrush}" 
+                                                    TextTrimming="CharacterEllipsis"/>
+                                            
+                                            <TextBlock Text="{Binding Description}" FontSize="12" 
+                                                    Foreground="{StaticResource MutedBrush}" 
+                                                    TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        
+                                        <Button Grid.Column="1" Content="➡" FontSize="24" FontWeight="SemiBold" Margin="5,0,0,0" 
+                                                Background="Transparent" BorderThickness="0" Foreground="{StaticResource DangerBrush}" 
+                                                Cursor="Hand" Click="JumpToAlert_Click" Tag="{Binding}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </TabControl.Resources>
+
+                        <TabItem x:Name="TabMissing" Header="Unassigned">
+                            <ListView ItemsSource="{Binding TbaAlerts, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        ItemTemplate="{StaticResource AlertTemplate}" 
+                                        ItemsPanel="{StaticResource WrapItemPanel}" 
+                                        BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                        </TabItem>
+                        
+                        <TabItem x:Name="TabIncomplete" Header="Incomplete">
+                            <ListView ItemsSource="{Binding IncompleteAlerts, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                    ItemTemplate="{StaticResource AlertTemplate}" 
+                                    ItemsPanel="{StaticResource WrapItemPanel}" 
+                                    BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                        </TabItem>
+
+                        <TabItem x:Name="TabCrowded" Header="Crowded">
+                            <ListView ItemsSource="{Binding CrowdedAlerts, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        ItemTemplate="{StaticResource AlertTemplate}" 
+                                        ItemsPanel="{StaticResource WrapItemPanel}" 
+                                        BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                        </TabItem>
+                        
+                        <TabItem x:Name="TabOverload" Header="Overload">
+                            <ListView ItemsSource="{Binding OverloadAlerts, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        ItemTemplate="{StaticResource AlertTemplate}" 
+                                        ItemsPanel="{StaticResource WrapItemPanel}" 
+                                        BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                        </TabItem>
+                        
+                        <TabItem x:Name="TabUnderload" Header="Underload">
+                            <ListView ItemsSource="{Binding UnderloadAlerts, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        ItemTemplate="{StaticResource AlertTemplate}" 
+                                        ItemsPanel="{StaticResource WrapItemPanel}" 
+                                        BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                        </TabItem>
+                        
+                        <TabItem x:Name="TabContinuous" Header="Straight">
+                            <ListView ItemsSource="{Binding ContinuousAlerts, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        ItemTemplate="{StaticResource AlertTemplate}" 
+                                        ItemsPanel="{StaticResource WrapItemPanel}" 
+                                        BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                        </TabItem>
+
+                        <TabItem x:Name="TabGaps" Header="Gaps">
+                            <ListView ItemsSource="{Binding GapAlerts, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        ItemTemplate="{StaticResource AlertTemplate}" 
+                                        ItemsPanel="{StaticResource WrapItemPanel}" 
+                                        BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                        </TabItem>
+                    </TabControl>
+                </GroupBox>
+            </Grid>
+
+            <GroupBox x:Name="VacancyGroup" Grid.Column="2" BorderBrush="{StaticResource TextLightBrush}">
+                <GroupBox.Header>
+                    <TextBlock Text="Vacancy Checkers" FontWeight="SemiBold" Foreground="{StaticResource InfoBrush}"/>
+                </GroupBox.Header>
+
+                <Grid Margin="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/> <ColumnDefinition Width="8"/> <ColumnDefinition Width="*"/> </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.3*"/>
+                                <ColumnDefinition Width="5"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Background="{StaticResource BackgroundBrush}" CornerRadius="5" Padding="5">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/> <RowDefinition Height="5"/>
+                                        <RowDefinition Height="Auto"/> <RowDefinition Height="5"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <ItemsControl x:Name="DayCheckList">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal"/> 
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <CheckBox Content="Mon" Margin="0,0,5,0" Loaded="InstDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Tue" Margin="0,0,5,0" Loaded="InstDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Wed" Margin="0,0,5,0" Loaded="InstDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Thu" Margin="0,0,5,0" Loaded="InstDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Fri" Margin="0,0,5,0" Loaded="InstDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Sat" Margin="0,0,5,0" Loaded="InstDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Sun" Margin="0,0,5,0" Loaded="InstDayCb_Loaded" FontSize="13"/>
+                                    </ItemsControl>
+
+                                    <Grid Grid.Row="2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/> <ColumnDefinition Width="5"/>
+                                            <ColumnDefinition Width="*"/> <ColumnDefinition Width="5"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <ComboBox x:Name="InstStartCombo" Grid.Column="0" FontSize="13"/>
+                                        <ComboBox x:Name="InstEndCombo" Grid.Column="2" FontSize="13"/>
+                                        
+                                        <Button Grid.Column="4" Content="➕" FontWeight="SemiBold" Width="25" 
+                                                Height="22"
+                                                Background="{StaticResource SidebarBrush}" 
+                                                Foreground="{StaticResource BackgroundBrush1}" 
+                                                BorderThickness="0"
+                                                Click="AddInstCriteria_Click" Cursor="Hand" ToolTip="Add to List"/>
+                                    </Grid>
+
+                                    <Grid Grid.Row="4">
+                                        <ComboBox x:Name="VacancyInstProgramCombo" SelectionChanged="InstFilter_Changed" FontSize="13">
+                                            <ComboBoxItem Content="All Programs" Tag="All" IsSelected="True"/>
+                                            <ComboBoxItem Content="BSCS" Tag="BSCS"/>
+                                            <ComboBoxItem Content="BSIT" Tag="BSIT"/>
+                                            <ComboBoxItem Content="BSIS" Tag="BSIS"/>
+                                            <ComboBoxItem Content="BSEMC" Tag="BSEMC"/>
+                                        </ComboBox>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+
+                            <ListView Grid.Column="2" ItemsSource="{Binding CriteriaList, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        BorderThickness="1" BorderBrush="{StaticResource TableLineBrush}" 
+                                        Height="85"
+                                        ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>    <ColumnDefinition Width="Auto"/> 
+                                                <ColumnDefinition Width="Auto"/> 
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Text="{Binding DisplayText}" FontSize="13" 
+                                                    Foreground="{StaticResource TextDarkBrush}" 
+                                                    VerticalAlignment="Center" TextWrapping="Wrap"/>
+
+                                            <ToggleButton Grid.Column="1" Content="{Binding Logic}" 
+                                                            Visibility="{Binding LogicVisibility}"
+                                                            FontSize="11" FontWeight="Bold" Width="30" Height="18" Margin="3,0"
+                                                            Click="ToggleInstLogic_Click" Tag="{Binding}"
+                                                            Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey}}"/> 
+
+                                            <Button Grid.Column="2" Content="❌" FontSize="11" Background="Transparent" 
+                                                    BorderThickness="0" Foreground="{StaticResource DangerBrush}" Cursor="Hand" 
+                                                    Click="RemoveInstCriteria_Click" Tag="{Binding}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </Grid>
+
+                        <ListView Grid.Row="1" ItemsSource="{Binding VacantInstructors, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="White" CornerRadius="4" Margin="2" Padding="5" 
+                                            BorderBrush="{StaticResource SidebarBrush}" BorderThickness="4,0,0,4" Width="182"> 
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding Header}" FontWeight="SemiBold" 
+                                                        Foreground="{StaticResource InfoBrush}" 
+                                                        FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                                
+                                                <TextBlock Text="{Binding SubHeader}" FontSize="12" 
+                                                        Foreground="{StaticResource MutedBrush}" 
+                                                        TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            
+                                            <Button Grid.Column="1" Content="➡" FontSize="24" FontWeight="SemiBold" Margin="2,0,0,0" 
+                                                    Background="Transparent" BorderThickness="0" 
+                                                    Foreground="{StaticResource SidebarBrush}" 
+                                                    Cursor="Hand" Click="JumpToInstVacancy_Click" Tag="{Binding InstructorId}" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/> 
+                            <RowDefinition Height="*"/>    
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.3*"/> 
+                                <ColumnDefinition Width="5"/>
+                                <ColumnDefinition Width="*"/>    
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Background="{StaticResource BackgroundBrush}" CornerRadius="5" Padding="5">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/> <RowDefinition Height="5"/>
+                                        <RowDefinition Height="Auto"/> <RowDefinition Height="5"/>
+                                        <RowDefinition Height="Auto"/> 
+                                    </Grid.RowDefinitions>
+                                    
+                                    <ItemsControl x:Name="RoomDayCheckList">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal"/> 
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <CheckBox Content="Mon" Margin="0,0,5,0" Loaded="RoomDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Tue" Margin="0,0,5,0" Loaded="RoomDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Wed" Margin="0,0,5,0" Loaded="RoomDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Thu" Margin="0,0,5,0" Loaded="RoomDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Fri" Margin="0,0,5,0" Loaded="RoomDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Sat" Margin="0,0,5,0" Loaded="RoomDayCb_Loaded" FontSize="13"/>
+                                        <CheckBox Content="Sun" Margin="0,0,5,0" Loaded="RoomDayCb_Loaded" FontSize="13"/>
+                                    </ItemsControl>
+
+                                    <Grid Grid.Row="2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/> <ColumnDefinition Width="5"/>
+                                            <ColumnDefinition Width="*"/> <ColumnDefinition Width="5"/>
+                                            <ColumnDefinition Width="Auto"/> 
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <ComboBox x:Name="RoomStartCombo" Grid.Column="0" FontSize="13" SelectionChanged="RoomFilter_Changed"/>
+                                        <ComboBox x:Name="RoomEndCombo" Grid.Column="2" FontSize="13" SelectionChanged="RoomFilter_Changed"/>
+                                        
+                                        <Button Grid.Column="4" Content="➕" FontWeight="SemiBold" Width="25" 
+                                                Height="22"
+                                                Background="{StaticResource SidebarBrush}" 
+                                                Foreground="{StaticResource BackgroundBrush1}" BorderThickness="0"
+                                                Click="AddRoomCriteria_Click" Cursor="Hand" ToolTip="Add to List"/>
+                                    </Grid>
+
+                                    <Grid Grid.Row="4">
+                                        <ComboBox x:Name="VacancyRoomFloorCombo" SelectionChanged="RoomFilter_Changed" FontSize="13">
+                                            <ComboBoxItem Content="All Floors" Tag="All" IsSelected="True"/>
+                                            <ComboBoxItem Content="1st Floor" Tag="1"/>
+                                            <ComboBoxItem Content="2nd Floor" Tag="2"/>
+                                            <ComboBoxItem Content="3rd Floor" Tag="3"/>
+                                            <ComboBoxItem Content="4th Floor" Tag="4"/>
+                                        </ComboBox>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+
+                            <ListView Grid.Column="2" ItemsSource="{Binding RoomCriteriaList, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        BorderThickness="1" BorderBrush="{StaticResource TableLineBrush}" 
+                                        Height="85" 
+                                        ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="Auto"/> 
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Text="{Binding DisplayText}" FontSize="13" 
+                                                    Foreground="{StaticResource TextDarkBrush}" 
+                                                    VerticalAlignment="Center" TextWrapping="Wrap" Margin="2,0"/>
+
+                                            <ToggleButton Grid.Column="1" Content="{Binding Logic}" 
+                                                            Visibility="{Binding LogicVisibility}"
+                                                            FontSize="11" FontWeight="Bold" Width="30" Height="18" Margin="3,0"
+                                                            Click="ToggleRoomLogic_Click" Tag="{Binding}"
+                                                            Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey}}"/> 
+
+                                            <Button Grid.Column="2" Content="❌" FontSize="11" Background="Transparent" 
+                                                    BorderThickness="0" Foreground="{StaticResource DangerBrush}" Cursor="Hand" 
+                                                    Click="RemoveRoomCriteria_Click" Tag="{Binding}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </Grid>
+
+                        <ListView Grid.Row="1" ItemsSource="{Binding VacantRooms, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ListView}}"/>
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="White" CornerRadius="4" Margin="2" Padding="5" 
+                                            BorderBrush="{StaticResource SidebarBrush}" BorderThickness="4,0,0,4" Width="182"> 
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding Header}" FontWeight="SemiBold" 
+                                                        Foreground="{StaticResource InfoBrush}" 
+                                                        FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                                
+                                                <TextBlock Text="{Binding SubHeader}" FontSize="12" 
+                                                        Foreground="{StaticResource MutedBrush}" 
+                                                        TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            
+                                            <Button Grid.Column="1" Content="➡" FontSize="24" FontWeight="SemiBold" Margin="2,0,0,0" 
+                                                    Background="Transparent" BorderThickness="0" 
+                                                    Foreground="{StaticResource SidebarBrush}" 
+                                                    Cursor="Hand" Click="JumpToRoomVacancy_Click" Tag="{Binding RoomId}" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+
+                </Grid>
+            </GroupBox>
+
+        </Grid>
+
+
+        <Grid x:Name="AppMainContent" Grid.Row="1" Grid.RowSpan="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+
+                <Grid Grid.Row="0" Margin="10,0,10,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!--=========================== INSTRUCTOR CONTROLS START ====================================-->
+                    <Border Grid.Column="0" Margin="0,0,5,0" Background="{StaticResource BackgroundBrush1}" CornerRadius="5" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1" Padding="10">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/> 
+                                    <ColumnDefinition Width="80"/>   
+                                    <ColumnDefinition Width="*"/>    
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Text="Inst:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,5,0"/>
+                                
+                                <ComboBox x:Name="InstProgramCombo" 
+                                        Grid.Column="1" 
+                                        Height="30" 
+                                        Margin="0,0,5,0"
+                                        SelectionChanged="InstProgramCombo_SelectionChanged">
+                                    <ComboBoxItem Content="All" Tag="All" IsSelected="True"/>
+                                    <ComboBoxItem Content="BSCS" Tag="BSCS"/>
+                                    <ComboBoxItem Content="BSIT" Tag="BSIT"/>
+                                    <ComboBoxItem Content="BSIS" Tag="BSIS"/>
+                                    <ComboBoxItem Content="BSEMC" Tag="BSEMC"/>
+                                </ComboBox>
+
+                                <ComboBox x:Name="InstructorSelector" 
+                                        Grid.Column="2" 
+                                        Height="30" 
+                                        DisplayMemberPath="Name"
+                                        SelectionChanged="InstructorSelector_SelectionChanged"/>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                            
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,5,0">
+                                    <TextBlock x:Name="InstTotalUnitsTxt" 
+                                            Text="Units: 0 / 24" 
+                                            FontWeight="SemiBold" 
+                                            FontSize="13" 
+                                            Foreground="{StaticResource InfoBrush}"/>
+                                    
+                                    <TextBlock x:Name="InstOverloadTxt" 
+                                            Text="Overload: 0" 
+                                            FontSize="13" 
+                                            Foreground="{StaticResource MutedBrush}"
+                                            Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <CheckBox x:Name="LockScheduleChk" 
+                                            Content="🔒 Lock" 
+                                            VerticalAlignment="Center" 
+                                            Margin="0,0,10,0"
+                                            ToolTip="Prevent changes to this schedule"
+                                            Click="LockScheduleChk_Click"/>
+
+                                    <Button x:Name="ViewInstLoadBtn" 
+                                            Content="📋 Load" 
+                                            Style="{StaticResource LoadButtonStyle}"
+                                            ToolTip="View list of classes and subjects"
+                                            Click="ViewInstLoadBtn_Click"/>
+
+                                    <Button x:Name="ClearScheduleBtn" 
+                                            Content="🗑️ Clear" 
+                                            Style="{StaticResource ClearButtonStyle}"
+                                            ToolTip="Clear all classes for this instructor"
+                                            Click="ClearScheduleBtn_Click"/>
+
+                                    <Button x:Name="ExporttoExcelBtn" 
+                                            Content="📊 Export Excel" 
+                                            Style="{StaticResource ExportButtonStyle}"
+                                            ToolTip="Export schedule to CSV"
+                                            Click="ExporttoExcelBtn_Click"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <!--=========================== INSTRUCTOR CONTROLS END ====================================-->
+                    <!--=========================== CLASS CONTROLS START ====================================-->
+                    <Border Grid.Column="1" Margin="5,0,5,0" Background="{StaticResource BackgroundBrush1}" CornerRadius="5" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1" Padding="10">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/> 
+                                    <ColumnDefinition Width="80"/>   
+                                    <ColumnDefinition Width="*"/>    
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Text="Class:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,5,0"/>
+                                
+                                <ComboBox x:Name="ClassProgramCombo" 
+                                        Grid.Column="1" 
+                                        Height="30" 
+                                        Margin="0,0,5,0"
+                                        SelectionChanged="ClassProgramCombo_SelectionChanged">
+                                    <ComboBoxItem Content="All" Tag="All" IsSelected="True"/>
+                                    <ComboBoxItem Content="BSCS" Tag="BSCS"/>
+                                    <ComboBoxItem Content="BSIT" Tag="BSIT"/>
+                                    <ComboBoxItem Content="BSIS" Tag="BSIS"/>
+                                    <ComboBoxItem Content="BSEMC" Tag="BSEMC"/>
+                                </ComboBox>
+
+                                <ComboBox x:Name="ClassSelector" 
+                                        Grid.Column="2" 
+                                        Height="30" 
+                                        DisplayMemberPath="DisplayName" 
+                                        SelectionChanged="ClassSelector_SelectionChanged"/>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock x:Name="ClassUnitsTxt" 
+                                            Text="Units: 0" 
+                                            FontWeight="SemiBold" 
+                                            FontSize="13" 
+                                            Foreground="{StaticResource MutedBrush}"/>
+
+                                    <TextBlock x:Name="ClassStudentCountTxt" 
+                                            Text="Students: 0" 
+                                            FontSize="13" 
+                                            Foreground="{StaticResource MutedBrush}"
+                                            Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button x:Name="SectionCoursesBtn"
+                                            Content="📋 Load"
+                                            Style="{StaticResource LoadButtonStyle}"
+                                            ToolTip="View list of assigned and extra courses"
+                                            Click="SectionCoursesBtn_Click"/>
+
+                                    <Button x:Name="ClearClassBtn" 
+                                            Content="🗑️ Clear" 
+                                            Style="{StaticResource ClearButtonStyle}"
+                                            ToolTip="Remove all classes for this section"
+                                            Click="ClearClassBtn_Click"/>
+
+                                    <Button x:Name="ExportClassBtn" 
+                                            Content="📊 Export Excel" 
+                                            Style="{StaticResource ExportButtonStyle}"
+                                            ToolTip="Export this class schedule"
+                                            Click="ExportClassBtn_Click"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <!--=========================== CLASS CONTROLS END ====================================-->
+                    <!--=========================== ROOM CONTROLS START ====================================-->
+                    <Border Grid.Column="2" Margin="5,0,0,0" Background="{StaticResource BackgroundBrush1}" CornerRadius="5" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1" Padding="10">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/> 
+                                    <ColumnDefinition Width="80"/>   <ColumnDefinition Width="*"/>    
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Text="Room:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,5,0"/>
+                                
+                                <ComboBox x:Name="RoomFloorCombo" 
+                                        Grid.Column="1" 
+                                        Height="30" 
+                                        Margin="0,0,5,0"
+                                        SelectionChanged="RoomFloorCombo_SelectionChanged">
+                                    <ComboBoxItem Content="All" Tag="All" IsSelected="True"/>
+                                    </ComboBox>
+
+                                <ComboBox x:Name="RoomSelector" 
+                                        Grid.Column="2" 
+                                        Height="30" 
+                                        DisplayMemberPath="Name" 
+                                        SelectionChanged="RoomSelector_SelectionChanged"/>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock x:Name="RoomStatusTxt" 
+                                            Text="Usage: 0%" 
+                                            FontWeight="SemiBold" 
+                                            FontSize="13" 
+                                            Foreground="{StaticResource MutedBrush}"/>
+                                    
+                                    <TextBlock x:Name="RoomDetailsTxt" 
+                                            Text="Type: - | Cap: -" 
+                                            FontSize="13" 
+                                            Foreground="{StaticResource MutedBrush}"
+                                            Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button x:Name="ClearRoomBtn" 
+                                            Content="🗑️ Clear" 
+                                            Style="{StaticResource ClearButtonStyle}"
+                                            ToolTip="Clear all classes in this room"
+                                            Click="ClearRoomBtn_Click"/>
+
+                                    <Button x:Name="ExportRoomBtn" 
+                                            Content="📊 Export Excel" 
+                                            Style="{StaticResource ExportButtonStyle}"
+                                            ToolTip="Export this room schedule"
+                                            Click="ExportRoomBtn_Click"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <!--=========================== ROOM CONTROLS END ====================================-->
+                </Grid>
+
+                <Grid Grid.Row="1" Margin="10,0,10,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <views:ScheduleTable x:Name="InstructorScheduleTable"
+                                        Title="Instructor Schedules" 
+                                        Grid.Column="0" 
+                                        Margin="0,0,5,0"
+                                        ShowInstructor="False"
+                                        ShowRoom="True"
+                                        ShowSection="True"/>
+
+                    <views:ScheduleTable x:Name="ClassScheduleTable"
+                                        Title="Class Schedules" 
+                                        Grid.Column="1" 
+                                        Margin="5,0,5,0"
+                                        ShowInstructor="True"
+                                        ShowRoom="True"
+                                        ShowSection="False"/>
+
+                    <views:ScheduleTable x:Name="RoomScheduleTable"
+                                        Title="Room Schedules" 
+                                        Grid.Column="2" 
+                                        Margin="5,0,0,0"
+                                        ShowInstructor="True"
+                                        ShowRoom="False"
+                                        ShowSection="True"/>
+
+
+                </Grid>
+        
+        </Grid>
+
+    </Grid>
+</Window>

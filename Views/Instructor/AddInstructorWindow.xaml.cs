@@ -1,0 +1,316 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
+using UniversityScheduler.Data;
+
+namespace UniversityScheduler.Views
+{
+    public class SelectableProgram
+    {
+        public string Name { get; set; } = string.Empty;
+        public bool IsSelected { get; set; }
+    }
+
+    public class TimeBlockItem
+    {
+        public string DisplayString { get; set; } = string.Empty;
+        public string ValueString { get; set; } = string.Empty;
+    }
+
+    public partial class AddInstructorWindow : Window
+    {
+        private ObservableCollection<TimeBlockItem> _timeBlocks = new ObservableCollection<TimeBlockItem>();
+        public ObservableCollection<SelectableProgram> AvailablePrograms { get; set; } = new ObservableCollection<SelectableProgram>();
+        private int _editingId = 0; 
+
+        public AddInstructorWindow()
+        {
+            InitializeComponent();
+            InitializeLists();
+            LoadPrograms(null);
+            LoadRooms();    
+        }
+
+        // Auto-Generate Initials
+        private void NameTxt_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_editingId == 0 && !string.IsNullOrWhiteSpace(NameTxt.Text))
+            {
+                var parts = NameTxt.Text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                string initials = "";
+                foreach (var part in parts)
+                {
+                    if (part.Length > 0 && char.IsLetter(part[0]))
+                        initials += char.ToUpper(part[0]);
+                }
+                InitialsTxt.Text = initials;
+            }
+        }
+
+        public AddInstructorWindow(Instructor instructorToEdit)
+        {
+            InitializeComponent();
+            InitializeLists();
+            
+            _editingId = instructorToEdit.Id;
+            this.Title = "Edit Instructor";
+            
+            NameTxt.Text = instructorToEdit.Name;
+            InitialsTxt.Text = instructorToEdit.Initials;
+            UnitsTxt.Text = instructorToEdit.MaxUnits.ToString();
+            
+            // 1. Set Assigned Room
+            if (instructorToEdit.AssignedRoomId != null)
+            {
+                AssignedRoomCombo.SelectedValue = instructorToEdit.AssignedRoomId;
+            }
+
+            // 2. Set Preferred Years (Parse "1,3" string)
+            if (!string.IsNullOrEmpty(instructorToEdit.PreferredYearLevels))
+            {
+                var years = instructorToEdit.PreferredYearLevels.Split(',');
+                CbYear1.IsChecked = years.Contains("1");
+                CbYear2.IsChecked = years.Contains("2");
+                CbYear3.IsChecked = years.Contains("3");
+                CbYear4.IsChecked = years.Contains("4");
+            }
+
+            foreach (ComboBoxItem item in StatusCombo.Items)
+                if (item.Content.ToString() == instructorToEdit.Status) 
+                    StatusCombo.SelectedItem = item;
+
+            LoadPrograms(instructorToEdit.Program);
+            LoadRooms();
+
+            if (instructorToEdit.AssignedRoomId != null)
+            {
+                AssignedRoomCombo.SelectedValue = instructorToEdit.AssignedRoomId;
+            }
+
+            if (!string.IsNullOrEmpty(instructorToEdit.PreferredYearLevels))
+            {
+                var years = instructorToEdit.PreferredYearLevels.Split(',');
+                CbYear1.IsChecked = years.Contains("1");
+                CbYear2.IsChecked = years.Contains("2");
+                CbYear3.IsChecked = years.Contains("3");
+                CbYear4.IsChecked = years.Contains("4");
+            }
+
+            if (!string.IsNullOrEmpty(instructorToEdit.SchedulePreferences))
+            {
+                var blocks = instructorToEdit.SchedulePreferences.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var block in blocks)
+                {
+                    var parts = block.Split('|');
+                    if (parts.Length == 2)
+                    {
+                        _timeBlocks.Add(new TimeBlockItem 
+                        { 
+                            DisplayString = $"{parts[0]} : {parts[1]}", 
+                            ValueString = block 
+                        });
+                    }
+                }
+            }
+        }
+
+        private void InitializeLists()
+        {
+            PreferencesList.ItemsSource = _timeBlocks;
+            ProgramCheckList.ItemsSource = AvailablePrograms;
+        }
+
+        private void LoadRooms()
+        {
+            using (var db = new AppDbContext())
+            {
+                // Get all rooms, sorted by Name
+                var rooms = db.Rooms.OrderBy(r => r.Name).ToList();
+                
+                // Add a "None" option (optional, or just allow null selection)
+                // For simplicity, we just bind the list. The user can leave it empty.
+                AssignedRoomCombo.ItemsSource = rooms;
+            }
+        }
+
+        private void LoadPrograms(string? existingPrograms)
+        {
+            AvailablePrograms.Clear();
+            using (var db = new AppDbContext())
+            {
+                if (db.Database.CanConnect())
+                {
+                    var programs = db.Sections
+                        .Where(s => s.Program != null)
+                        .Select(s => s.Program)
+                        .Distinct()
+                        .OrderBy(p => p)
+                        .ToList();
+
+                    foreach (var p in programs)
+                    {
+                        if (p != "General Education")
+                            AvailablePrograms.Add(new SelectableProgram { Name = p, IsSelected = false });
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(existingPrograms))
+            {
+                var currentTags = existingPrograms.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var item in AvailablePrograms)
+                {
+                    if (currentTags.Contains(item.Name)) item.IsSelected = true;
+                }
+            }
+        }
+
+        // --- NEW HELPER METHODS FOR SELECT ALL/NONE ---
+        private void SelectAllDays_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var child in DayCheckboxes.Children)
+                if (child is CheckBox cb) cb.IsChecked = true;
+        }
+
+        private void SelectNoDays_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var child in DayCheckboxes.Children)
+                if (child is CheckBox cb) cb.IsChecked = false;
+        }
+
+        // --- NEW ADD BLOCK LOGIC (USING COMBOBOXES) ---
+        private void AddBlock_Click(object sender, RoutedEventArgs e)
+        {
+            // 1. Build time strings from dropdowns
+            string startStr = $"{StartHourCombo.Text}:{StartMinCombo.Text} {StartAmPmCombo.Text}";
+            string endStr   = $"{EndHourCombo.Text}:{EndMinCombo.Text} {EndAmPmCombo.Text}";
+
+            // 2. Parse
+            if (!DateTime.TryParse(startStr, out DateTime startDt) || 
+                !DateTime.TryParse(endStr, out DateTime endDt))
+            {
+                MessageBox.Show("Invalid Time Selection");
+                return;
+            }
+
+            // 3. Auto-Correct: If End Time is before Start Time, assume +12 hours (e.g., 11AM to 1PM)
+            if (endDt <= startDt)
+            {
+                if (endDt.AddHours(12) > startDt)
+                    endDt = endDt.AddHours(12);
+                else
+                {
+                    MessageBox.Show("End time must be after Start time.");
+                    return;
+                }
+            }
+
+            // 4. Gather Days
+            List<string> selectedDays = new List<string>();
+            foreach (var child in DayCheckboxes.Children)
+            {
+                if (child is CheckBox cb && cb.IsChecked == true)
+                {
+                    string day = cb.Content?.ToString() ?? "";
+                    if (!string.IsNullOrEmpty(day)) selectedDays.Add(day);
+                }
+            }
+
+            if (selectedDays.Count == 0) { MessageBox.Show("Select at least one day."); return; }
+
+            string daysStr = string.Join(",", selectedDays);
+            string timeStr = $"{startDt.ToString("h:mm tt")} - {endDt.ToString("h:mm tt")}";
+            string newValueString = $"{daysStr}|{timeStr}";
+
+            // 5. Prevent Duplicates
+            if (_timeBlocks.Any(b => b.ValueString == newValueString))
+            {
+                MessageBox.Show("This time block is already added.");
+                return;
+            }
+
+            _timeBlocks.Add(new TimeBlockItem
+            {
+                DisplayString = $"{daysStr} : {timeStr}",
+                ValueString = newValueString
+            });
+        }
+
+        private void RemoveBlock_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is TimeBlockItem item)
+            {
+                _timeBlocks.Remove(item);
+            }
+        }
+
+        private void Save_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(NameTxt.Text)) { MessageBox.Show("Name is required."); return; }
+            if (!int.TryParse(UnitsTxt.Text, out int units)) { MessageBox.Show("Invalid Units."); return; }
+
+            var selectedProgs = AvailablePrograms.Where(p => p.IsSelected).Select(p => p.Name).ToList();
+            if (selectedProgs.Count == 0) { MessageBox.Show("Please check at least one program."); return; }
+            
+            // 1. Get Selected Room ID
+            int? roomId = null;
+            if (AssignedRoomCombo.SelectedValue != null)
+            {
+                roomId = (int)AssignedRoomCombo.SelectedValue;
+            }
+
+            // 2. Get Preferred Years String (e.g., "1,2,4")
+            List<string> selectedYears = new List<string>();
+            if (CbYear1.IsChecked == true) selectedYears.Add("1");
+            if (CbYear2.IsChecked == true) selectedYears.Add("2");
+            if (CbYear3.IsChecked == true) selectedYears.Add("3");
+            if (CbYear4.IsChecked == true) selectedYears.Add("4");
+            
+            string yearString = string.Join(",", selectedYears);
+
+            string finalProgramStr = string.Join(", ", selectedProgs);
+            string finalSchedule = string.Join(";", _timeBlocks.Select(b => b.ValueString));
+
+            using (var db = new AppDbContext())
+            {
+                if (_editingId == 0)
+                {
+                    var newInstructor = new Instructor
+                    {
+                        Name = NameTxt.Text,
+                        Initials = InitialsTxt.Text,
+                        Status = (StatusCombo.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time",
+                        Program = finalProgramStr,
+                        MaxUnits = units,
+                        SchedulePreferences = finalSchedule,
+                        AssignedRoomId = roomId,
+                        PreferredYearLevels = yearString
+                    };
+                    db.Instructors.Add(newInstructor);
+                }
+                else
+                {
+                    var existing = db.Instructors.Find(_editingId);
+                    if (existing != null)
+                    {
+                        existing.Name = NameTxt.Text;
+                        existing.Initials = InitialsTxt.Text;
+                        existing.Status = (StatusCombo.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time";
+                        existing.Program = finalProgramStr;
+                        existing.MaxUnits = units;
+                        existing.SchedulePreferences = finalSchedule;
+                        existing.AssignedRoomId = roomId;
+                        existing.PreferredYearLevels = yearString;
+                    }
+                }
+                db.SaveChanges();
+            }
+            
+            MessageBox.Show("Instructor Saved!");
+            this.Close();
+        }
+    }
+}

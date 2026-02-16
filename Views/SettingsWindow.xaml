@@ -1,0 +1,65 @@
+<Window x:Class="UniversityScheduler.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Application Settings" 
+        Height="650" Width="350"
+        MinHeight="300" MinWidth="300"
+        WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip"
+        Icon="/UNIGAMIicon128.ico">
+    
+    <Border Padding="20" Background="#F7F9F9">
+        <StackPanel>
+            <TextBlock Text="Window Settings" FontSize="18" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+            
+            <GroupBox Header="Always on Top Configuration" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="Select windows to keep on top:" Foreground="Gray" Margin="0,0,0,10"/>
+                    
+                    <CheckBox x:Name="CbInstructors" Content="Instructors Window" Margin="0,5"/>
+                    <CheckBox x:Name="CbCourses" Content="Courses Window" Margin="0,5"/>
+                    <CheckBox x:Name="CbClasses" Content="Classes Window" Margin="0,5"/>
+                    <CheckBox x:Name="CbRooms" Content="Rooms Window" Margin="0,5"/>
+                    <CheckBox x:Name="CbStats" Content="Stats Window" Margin="0,5"/>
+                    <CheckBox x:Name="CbGenerate" Content="Generate Window" Margin="0,5"/>
+
+                    <TextBlock Text="Schedule Time Range:" Foreground="Gray" Margin="0,15,0,5" FontWeight="Bold"/>
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Start Time:" FontSize="11" Foreground="#7F8C8D"/>
+                                <ComboBox x:Name="ComboStartTime" Height="30" Margin="0,2,0,0">
+                                    <ComboBoxItem Content="6:00 AM" Tag="6"/>
+                                    <ComboBoxItem Content="7:00 AM" Tag="7"/>
+                                    <ComboBoxItem Content="8:00 AM" Tag="8"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="End Time:" FontSize="11" Foreground="#7F8C8D"/>
+                                <ComboBox x:Name="ComboEndTime" Height="30" Margin="0,2,0,0">
+                                    <ComboBoxItem Content="7:00 PM" Tag="19"/>
+                                    <ComboBoxItem Content="8:00 PM" Tag="20"/>
+                                    <ComboBoxItem Content="9:00 PM" Tag="21"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+
+                </StackPanel>
+            </GroupBox>
+
+
+            
+
+            <Button Content="Save &amp; Close" 
+                    Background="#27AE60" Foreground="White" FontWeight="SemiBold"
+                    Height="35" Margin="0,20,0,0" 
+                    Click="Save_Click"/>
+            
+        </StackPanel>
+    </Border>
+</Window>
