@@ -33,7 +33,6 @@ namespace UniversityScheduler
         private Window? _statsWindow = null;
         private Window? _generatorWindow = null;
 
-
     #region Initialization and Startup
         
         public static void TriggerDatabaseUpdated()
