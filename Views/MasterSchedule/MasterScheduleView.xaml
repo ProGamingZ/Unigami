@@ -92,6 +92,10 @@
                     <Button Content="Import" 
                             Style="{StaticResource MasterSchedButtonStyle}"
                             Click="ImportSchedule_Click"/>
+                            
+                    <Button Content="Wipe Data" 
+                            Style="{StaticResource MasterSchedButtonStyle}"
+                            Click="WipeData_Click"/>
                 </StackPanel>
             </WrapPanel>
         </Border>

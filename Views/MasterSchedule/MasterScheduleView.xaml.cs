@@ -45,14 +45,14 @@ namespace UniversityScheduler.Views
             }
         // Dropdown Updates
             private void Filter_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (!_isLoaded || _isUpdatingFilters) return;
-            using (var db = new AppDbContext())
             {
-                UpdateDynamicFilters(db); 
+                if (!_isLoaded || _isUpdatingFilters) return;
+                using (var db = new AppDbContext())
+                {
+                    UpdateDynamicFilters(db); 
+                }
+                RefreshSchedule(); 
             }
-            RefreshSchedule(); 
-        }
         // Buttons
             private async void GenerateSchedule_Click(object sender, RoutedEventArgs e)
             {
@@ -68,6 +68,35 @@ namespace UniversityScheduler.Views
             {
                 var settingsWin = new SchedulerSettingsWindow();
                 settingsWin.ShowDialog(); // Use ShowDialog so they must close it before clicking Generate
+            }
+            private void WipeData_Click(object sender, RoutedEventArgs e)
+            {
+                var result = MessageBox.Show(
+                    "WARNING: This will completely wipe ALL generated schedules and instructor assignments from the database. This action cannot be undone.\n\nAre you sure you want to reset data?",
+                    "Confirm Data Wipe",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        using (var db = new AppDbContext())
+                        {
+                            db.Schedules.RemoveRange(db.Schedules);
+                            db.SaveChanges();
+                        }
+                        
+                        RefreshSchedule();
+                        UniversityScheduler.MainWindow.TriggerDatabaseUpdated();
+                        
+                        MessageBox.Show("All schedules and assignments have been wiped clean. You can now generate a new schedule.", "Data Wiped", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to wipe data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
             }
         #endregion
         
