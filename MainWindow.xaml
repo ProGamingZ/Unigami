@@ -556,7 +556,7 @@
                                             Margin="0,2,0,0"/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button x:Name="SectionCoursesBtn"
                                             Content="📋 Load"
                                             Style="{StaticResource LoadButtonStyle}"
@@ -625,7 +625,7 @@
                                             Margin="0,2,0,0"/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button x:Name="ClearRoomBtn" 
                                             Content="🗑️ Clear" 
                                             Style="{StaticResource ClearButtonStyle}"

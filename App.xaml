@@ -88,7 +88,7 @@
         <Style x:Key="ExportButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="{StaticResource SidebarBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource BackgroundBrush1}"/>
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Padding" Value="5,5"/>
             </Style>
 
 
