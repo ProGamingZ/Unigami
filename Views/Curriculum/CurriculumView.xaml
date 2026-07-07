@@ -5,6 +5,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="900">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -17,8 +20,6 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="250"/>
             </Grid.ColumnDefinitions>
-
-            <TextBlock Text="Curriculum Management" FontSize="24" FontWeight="Bold" Foreground="{StaticResource SidebarBrush}" VerticalAlignment="Center"/>
 
             <Border Grid.Column="1" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1" CornerRadius="4" Background="White" Height="35">
                 <Grid>
@@ -38,30 +39,90 @@
             </Border>
         </Grid>
 
-        <DataGrid x:Name="CurriculumGrid" 
-                  Grid.Row="1" 
-                  AutoGenerateColumns="False" 
-                  CanUserAddRows="False" 
-                  IsReadOnly="True"
-                  SelectionMode="Single"
-                  BorderBrush="{StaticResource TableLineBrush}"
-                  HorizontalGridLinesBrush="{StaticResource TextLightBrush}"
-                  VerticalGridLinesBrush="{StaticResource TextLightBrush}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Program" Binding="{Binding Program}" Width="100" FontWeight="SemiBold"/>
-                <DataGridTextColumn Header="Year" Binding="{Binding YearLevel}" Width="60"/>
-                <DataGridTextColumn Header="Sem" Binding="{Binding Semester}" Width="60"/>
-                <DataGridTextColumn Header="Course Code" Binding="{Binding Course.Code}" Width="100" FontWeight="Bold" Foreground="{StaticResource SidebarBrush}"/>
-                <DataGridTextColumn Header="Descriptive Title" Binding="{Binding Course.Name}" Width="*"/>
-                <DataGridTextColumn Header="Units" Binding="{Binding Course.Units}" Width="60"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <ListBox x:Name="CurriculumCardsControl" Grid.Row="1" BorderThickness="0" Background="Transparent" 
+                 HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Margin" Value="0,0,10,15"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="BorderBrush" Value="Transparent"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" 
+                                        Background="{TemplateBinding Background}" CornerRadius="4">
+                                    <ContentPresenter/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="BorderBrush" Value="#3498DB"/> 
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                        <Border Background="White" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1" CornerRadius="4">
+                            <StackPanel>
+                                
+                                <Grid Margin="10" Background="Transparent">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{Binding GroupTitle}" FontSize="16" FontWeight="Bold" 
+                                            Foreground="{StaticResource SidebarBrush}" VerticalAlignment="Center"/>
+
+                                    <ToggleButton x:Name="ExpandToggle" Grid.Column="1" IsChecked="{Binding IsExpanded, Mode=TwoWay}" 
+                                                Width="30" Height="30" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                        <ToggleButton.Style>
+                                            <Style TargetType="ToggleButton">
+                                                <Setter Property="Content" Value="▼"/> <Setter Property="FontSize" Value="14"/>
+                                                <Setter Property="Foreground" Value="Gray"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsChecked" Value="False">
+                                                        <Setter Property="Content" Value="▶"/> </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Foreground" Value="Black"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ToggleButton.Style>
+                                    </ToggleButton>
+                                </Grid>
+
+                                <DataGrid ItemsSource="{Binding Items}" 
+                                        Visibility="{Binding IsChecked, ElementName=ExpandToggle, Converter={StaticResource BoolToVis}}"
+                                        AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
+                                        BorderThickness="0" Margin="15,0,15,15"
+                                        HorizontalGridLinesBrush="{StaticResource TextLightBrush}"
+                                        VerticalGridLinesBrush="Transparent"
+                                        RowBackground="White" AlternatingRowBackground="#F9F9F9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Subject" Binding="{Binding Course.Code}" Width="100" FontWeight="Bold"/>
+                                        <DataGridTextColumn Header="Description" Binding="{Binding Course.Name}" Width="350"/>
+                                        <DataGridTextColumn Header="Units" Binding="{Binding Course.Units}" Width="60"/>
+                                        <DataGridTextColumn Header="Lec" Binding="{Binding Course.LectureHours}" Width="60"/>
+                                        <DataGridTextColumn Header="Lab" Binding="{Binding Course.LabHours}" Width="60"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                
+                            </StackPanel>
+                        </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button Content="Reset All" Width="100" Height="35" Margin="0,0,10,0" Style="{StaticResource DangerButton}" Click="Reset_Click"/>
-            
-            <Button Content="Edit Entry" Style="{StaticResource SecondaryButton}" Width="140" Height="35" Margin="0,0,10,0" Click="Edit_Click"/>
-            <Button Content="Remove Entry" Width="140" Height="35" Margin="0,0,10,0" Style="{StaticResource DangerButton}" Click="Delete_Click"/>
+            <Button Content="Edit Curriculum" Style="{StaticResource SecondaryButton}" Width="140" Height="35" Margin="0,0,10,0" Click="Edit_Click"/>
+            <Button Content="Remove Card" Width="140" Height="35" Margin="0,0,10,0" Style="{StaticResource DangerButton}" Click="Delete_Click"/>
             <Button Content="Add Curriculum" Style="{StaticResource PrimaryButton}" Width="140" Height="35" Click="Add_Click"/>
         </StackPanel>
     </Grid>

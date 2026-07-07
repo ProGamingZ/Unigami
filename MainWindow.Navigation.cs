@@ -60,7 +60,7 @@ namespace UniversityScheduler
          _curriculumWindow = new Window 
          { 
             Title = "Curriculum Management", 
-            Content = new Views.CurriculumManagerView(), 
+            Content = new Views.CurriculumManagerView(_currentSemester), 
             Width = 1000, 
             Height = 650, 
             Topmost = GlobalSettings.CoursesOnTop 

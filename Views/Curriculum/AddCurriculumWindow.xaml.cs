@@ -1,178 +1,201 @@
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using UniversityScheduler.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace UniversityScheduler.Views
 {
-    // Helper class for the ComboBox
+    // Updated helper class to hold full course data for the mini-table
     public class CourseDisplayItem
     {
         public int Id { get; set; }
         public string Code { get; set; } = "";
         public string Name { get; set; } = "";
+        public int Units { get; set; }
+        public int LectureHours { get; set; }
+        public int LabHours { get; set; }
         public string Programs { get; set; } = "";
-        // This is what the user sees in the dropdown
         public string FullDisplay => $"{Code} - {Name}";
     }
 
     public partial class AddCurriculumWindow : Window
     {
-        private int _editingId = 0;
+        private List<CourseDisplayItem> _allCourseItems = new List<CourseDisplayItem>();
+        
+        // This collection binds to the DataGrid
+        private ObservableCollection<CourseDisplayItem> _selectedCourses = new ObservableCollection<CourseDisplayItem>();
+        
+        private bool _isEditMode = false;
 
-        public AddCurriculumWindow()
+        // Constructor for ADDING
+        public AddCurriculumWindow(int targetSemester)
         {
             InitializeComponent();
             LoadCourses();
             
-            // Wire up event to update preview instantly
-            ProgramCombo.SelectionChanged += UpdatePreview;
-
-            ProgramCombo.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent, 
-            new TextChangedEventHandler((s, e) => UpdatePreview(s, null!)));
-
-            YearCombo.SelectionChanged += UpdatePreview;
-            SemesterCombo.SelectionChanged += UpdatePreview;
-            CourseCombo.SelectionChanged += UpdatePreview;
-        }
-
-        public AddCurriculumWindow(Curriculum editItem) : this()
-        {
-            _editingId = editItem.Id;
-            Title = "Edit Curriculum Entry";
-
-            // Set Fields
-            ProgramCombo.Text = editItem.Program;
-            
-            // Set Year
-            foreach(ComboBoxItem item in YearCombo.Items)
-                if (item.Tag.ToString() == editItem.YearLevel.ToString()) YearCombo.SelectedItem = item;
-
-            // Set Semester
+            // Set Target Semester
             foreach (ComboBoxItem item in SemesterCombo.Items)
-                if (item.Tag.ToString() == editItem.Semester.ToString()) SemesterCombo.SelectedItem = item;
+                if (item.Tag.ToString() == targetSemester.ToString()) SemesterCombo.SelectedItem = item;
 
-            // Set Course
-            CourseCombo.SelectedValue = editItem.CourseId;
+            SelectedCoursesGrid.ItemsSource = _selectedCourses;
+            ProgramCombo.SelectionChanged += (s, e) => FilterCourses();
+            ProgramCombo.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent, 
+                new TextChangedEventHandler((s, e) => FilterCourses()));
+            
+            FilterCourses();
         }
 
-        private List<CourseDisplayItem> _allCourseItems = new List<CourseDisplayItem>();
+        // Constructor for EDITING
+        public AddCurriculumWindow(CurriculumGroup editGroup) : this(editGroup.Semester)
+        {
+            _isEditMode = true;
+            Title = $"Edit {editGroup.GroupTitle}";
+
+            // Lock the combo boxes so they don't accidentally move the entire group
+            ProgramCombo.IsEnabled = false;
+            YearCombo.IsEnabled = false;
+            SemesterCombo.IsEnabled = false;
+
+            ProgramCombo.Text = editGroup.Program;
+            
+            foreach(ComboBoxItem item in YearCombo.Items)
+                if (item.Tag.ToString() == editGroup.YearLevel.ToString()) YearCombo.SelectedItem = item;
+
+            // Load existing courses into the mini table
+            foreach(var item in editGroup.Items)
+            {
+                if (item.Course != null)
+                {
+                    _selectedCourses.Add(new CourseDisplayItem 
+                    { 
+                        Id = item.Course.Id, 
+                        Code = item.Course.Code, 
+                        Name = item.Course.Name,
+                        Units = item.Course.Units,
+                        LectureHours = item.Course.LectureHours,
+                        LabHours = item.Course.LabHours
+                    });
+                }
+            }
+            
+            FilterCourses();
+        }
+
         private void LoadCourses()
         {
             using (var db = new AppDbContext())
             {
                 _allCourseItems = db.Courses.OrderBy(c => c.Code).Select(c => new CourseDisplayItem 
                 { 
-                    Id = c.Id, 
-                    Code = c.Code, 
-                    Name = c.Name,
-                    Programs = c.RecommendedPrograms ?? "" // Handle potential nulls
+                    Id = c.Id, Code = c.Code, Name = c.Name,
+                    Units = c.Units, LectureHours = c.LectureHours, LabHours = c.LabHours,
+                    Programs = c.RecommendedPrograms ?? "" 
                 }).ToList();
-
-                CourseCombo.ItemsSource = _allCourseItems;
             }
         }
 
         private void FilterCourses()
         {
             string selectedProgram = ProgramCombo.Text.Trim(); 
-
             if (string.IsNullOrWhiteSpace(selectedProgram))
             {
-                // If nothing is selected/typed, show all courses
                 CourseCombo.ItemsSource = _allCourseItems;
             }
             else
             {
-                // Filter: Only show courses where the Programs string contains the selected Program
-                // (e.g., if Program is "BSCS", show courses that have "BSCS" in their list)
                 var filtered = _allCourseItems
                     .Where(c => c.Programs.IndexOf(selectedProgram, System.StringComparison.OrdinalIgnoreCase) >= 0)
                     .ToList();
-                    
                 CourseCombo.ItemsSource = filtered;
             }
         }
 
-        private void UpdatePreview(object sender, RoutedEventArgs e)
+        // Add a course to the mini table
+        private void AddCourse_Click(object sender, RoutedEventArgs e)
         {
-            FilterCourses();
-            // Simple preview logic
-            string prog = ProgramCombo.Text;
-            if (string.IsNullOrWhiteSpace(prog)) prog = "???";
+            if (CourseCombo.SelectedItem is CourseDisplayItem selectedCourse)
+            {
+                // Prevent duplicate rows in the grid
+                if (_selectedCourses.Any(c => c.Id == selectedCourse.Id))
+                {
+                    MessageBox.Show("This course is already added to the list.", "Duplicate", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
 
-            string course = "???";
-            if (CourseCombo.SelectedItem is CourseDisplayItem c) course = c.Code;
-
-            PreviewTxt.Text = $"{prog} {YearCombo.Text}, {SemesterCombo.Text}\nAdds Course: {course}";
+                _selectedCourses.Add(selectedCourse);
+                CourseCombo.SelectedItem = null; // Reset combo box
+                CourseCombo.Text = "";
+            }
+            else
+            {
+                MessageBox.Show("Please select a valid course from the dropdown.", "Invalid Selection");
+            }
         }
-        
-        // Handling the Editable ComboBox text change event manually requires a little casting
-        private void UpdatePreview(object sender, TextChangedEventArgs e) => UpdatePreview(sender, new RoutedEventArgs());
+
+        // Remove a course from the mini table
+        private void RemoveCourse_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext is CourseDisplayItem itemToRemove)
+            {
+                _selectedCourses.Remove(itemToRemove);
+            }
+        }
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            // 1. Validation
             string program = ProgramCombo.Text.Trim();
-            if (string.IsNullOrWhiteSpace(program))
-            {
-                MessageBox.Show("Program is required.");
-                return;
-            }
-
-            if (CourseCombo.SelectedValue == null)
-            {
-                MessageBox.Show("Please select a Course.");
-                return;
-            }
-            int courseId = (int)CourseCombo.SelectedValue;
+            if (string.IsNullOrWhiteSpace(program)) { MessageBox.Show("Program is required."); return; }
 
             int year = int.Parse(((ComboBoxItem)YearCombo.SelectedItem).Tag.ToString() ?? "1");
             int sem = int.Parse(((ComboBoxItem)SemesterCombo.SelectedItem).Tag.ToString() ?? "1");
 
             using (var db = new AppDbContext())
             {
-                // Check for duplicates
-                bool exists = db.Curriculums.Any(c => 
+                // Step 1: Find all existing database entries for this specific Card
+                var existingEntries = db.Curriculums.Where(c => 
                     c.Program == program && 
                     c.YearLevel == year && 
-                    c.Semester == sem && 
-                    c.CourseId == courseId &&
-                    c.Id != _editingId); // Exclude self if editing
+                    c.Semester == sem).ToList();
 
-                if (exists)
+                // Step 1.5: SAFETY CHECK - If we are adding a new card, warn before overwriting
+                if (!_isEditMode && existingEntries.Any())
                 {
-                    MessageBox.Show("This course is already in the curriculum for this Program/Year/Sem.");
-                    return;
+                    var result = MessageBox.Show(
+                        $"A curriculum card for {program} {year}-{sem} already exists.\n\nDo you want to overwrite it with this new list of courses?", 
+                        "Existing Curriculum Found", 
+                        MessageBoxButton.YesNo, 
+                        MessageBoxImage.Warning);
+
+                    // If the user clicks No, cancel the save process and keep the window open
+                    if (result == MessageBoxResult.No)
+                    {
+                        return; 
+                    }
                 }
 
-                if (_editingId == 0)
+                // Step 2: Delete the old entries (Proceeds if Editing, or if User said 'Yes' to overwrite)
+                db.Curriculums.RemoveRange(existingEntries);
+
+                // Step 3: Re-add whatever is currently in the _selectedCourses list
+                foreach (var sc in _selectedCourses)
                 {
                     db.Curriculums.Add(new Curriculum
                     {
                         Program = program,
                         YearLevel = year,
                         Semester = sem,
-                        CourseId = courseId
+                        CourseId = sc.Id
                     });
                 }
-                else
-                {
-                    var item = db.Curriculums.Find(_editingId);
-                    if (item != null)
-                    {
-                        item.Program = program;
-                        item.YearLevel = year;
-                        item.Semester = sem;
-                        item.CourseId = courseId;
-                    }
-                }
+                
                 db.SaveChanges();
             }
 
-            MessageBox.Show("Curriculum Saved!");
+            MessageBox.Show("Curriculum Card Saved successfully!", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
             Close();
         }
+    
     }
 }
