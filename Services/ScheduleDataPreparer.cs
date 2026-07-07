@@ -66,14 +66,25 @@ namespace UniversityScheduler.Services
 
                     // --- SPLIT LOGIC CHECK ---
                     // A course splits ONLY if: Global setting is ON AND Course is NOT an exception.
-                    bool shouldSplit = settings.EnableBlockSplitting;
-                    if (splitExceptions.Contains(course.Code)) shouldSplit = false;
+                    bool splitLec = settings.EnableBlockSplitting;
+                    bool splitLab = settings.EnableBlockSplitting;
+
+                    // Check exact component exceptions (e.g., "CS101 - Lec")
+                    if (splitExceptions.Contains($"{course.Code} - Lec")) splitLec = false;
+                    if (splitExceptions.Contains($"{course.Code} - Lab")) splitLab = false;
+
+                    // Backwards compatibility: If the old format "CS101" is used, exempt both
+                    if (splitExceptions.Contains(course.Code)) 
+                    {
+                        splitLec = false;
+                        splitLab = false;
+                    }
 
                     // A. LECTURE COMPONENT
                     if (course.LectureHours > 0)
                     {
                         // If 3 hours AND splitting is allowed -> Create two 1.5hr tasks
-                        if (course.LectureHours == 3 && shouldSplit) 
+                        if (course.LectureHours == 3 && splitLec) 
                         {
                             var t1 = CreateTask(section, course, "Lec", 3, 1);
                             var t2 = CreateTask(section, course, "Lec", 3, 2);
@@ -93,7 +104,7 @@ namespace UniversityScheduler.Services
                     if (course.LabHours > 0)
                     {
                         // Same logic for Labs (if you want Labs to split too)
-                        if (course.LabHours == 3 && shouldSplit) 
+                        if (course.LabHours == 3 && splitLab) 
                         {
                             var t1 = CreateTask(section, course, "Lab", 3, 1);
                             var t2 = CreateTask(section, course, "Lab", 3, 2);

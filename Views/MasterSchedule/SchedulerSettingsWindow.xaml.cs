@@ -17,6 +17,7 @@ namespace UniversityScheduler.Views
     {
         private SchedulerSettings _settings = new SchedulerSettings();
         private List<string> _allCourseCodes = new List<string>();
+        private List<string> _splitExceptionCodes = new List<string>();
         private int _detectedCores;
 
         // Observable collections bind to the Lists in the UI
@@ -88,14 +89,20 @@ namespace UniversityScheduler.Views
 
             using (var db = new AppDbContext())
             {
-                // Safety check if database exists
                 if (db.Database.CanConnect())
                 {
-                    _allCourseCodes = db.Courses
-                        .Select(c => c.Code)
-                        .Distinct()
-                        .OrderBy(c => c)
-                        .ToList();
+                    var allCourses = db.Courses.OrderBy(c => c.Code).ToList();
+                    
+                    foreach (var c in allCourses)
+                    {
+                        _allCourseCodes.Add(c.Code); 
+                        if (c.LectureHours > 0)
+                            _splitExceptionCodes.Add($"{c.Code} - {c.LectureHours} Lec");
+                        
+                        if (c.LabHours > 0)
+                            _splitExceptionCodes.Add($"{c.Code} - {c.LabHours} Lab");
+                    }
+                    _allCourseCodes = _allCourseCodes.Distinct().ToList();
                 }
             }
 
@@ -103,7 +110,7 @@ namespace UniversityScheduler.Views
             if (DayRuleInput != null) DayRuleInput.ItemsSource = _allCourseCodes;
             if (TimeRuleInput != null) TimeRuleInput.ItemsSource = _allCourseCodes;
             if (ExclusionInput != null) ExclusionInput.ItemsSource = _allCourseCodes;
-            if (SplitExceptionInput != null) SplitExceptionInput.ItemsSource = _allCourseCodes;
+            if (SplitExceptionInput != null) SplitExceptionInput.ItemsSource = _splitExceptionCodes;
         }
 
         private void CourseInput_KeyUp(object sender, KeyEventArgs e)
@@ -140,13 +147,32 @@ namespace UniversityScheduler.Views
         private void AddSplitException_Click(object sender, RoutedEventArgs e)
         {
             if (SplitExceptionInput == null) return;
-            string course = SplitExceptionInput.Text.Trim().ToUpper();
-            if (string.IsNullOrEmpty(course)) return;
+            string rawText = SplitExceptionInput.Text.Trim();
+            if (string.IsNullOrEmpty(rawText)) return;
 
-            if (!TempSplitExceptions.Contains(course))
+            string exceptionToAdd = rawText;
+
+            // Convert dropdown text (e.g., "CS101 - 3 Lec") into clean format ("CS101 - Lec")
+            var parts = rawText.Split(new[] { " - " }, StringSplitOptions.None);
+            if (parts.Length == 2)
             {
-                TempSplitExceptions.Add(course);
-                // FIX: ComboBox doesn't have .Clear(), use .Text = ""
+                string course = parts[0].Trim().ToUpper();
+                string comp = parts[1].Trim().ToUpper(); 
+                
+                if (comp.Contains("LEC")) exceptionToAdd = $"{course} - Lec";
+                else if (comp.Contains("LAB")) exceptionToAdd = $"{course} - Lab";
+            }
+            else
+            {
+                // If the user typed it manually, ensure standard casing
+                exceptionToAdd = exceptionToAdd.ToUpper()
+                                .Replace(" - LEC", " - Lec")
+                                .Replace(" - LAB", " - Lab");
+            }
+
+            if (!TempSplitExceptions.Contains(exceptionToAdd))
+            {
+                TempSplitExceptions.Add(exceptionToAdd);
                 SplitExceptionInput.Text = string.Empty;
             }
         }

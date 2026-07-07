@@ -78,15 +78,31 @@
                                             <Button Content="Add" Width="50" Click="AddDayRule_Click"/>
                                         </StackPanel>
 
-                                        <ListBox x:Name="DayRulesList" Grid.Row="2" BorderBrush="#EEEEEE">
+                                        <ListBox x:Name="DayRulesList" Grid.Row="2" BorderBrush="#EEEEEE" BorderThickness="1" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                            <ListBox.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ListBox.ItemsPanel>
+                                            
+                                            <ListBox.ItemContainerStyle>
+                                                <Style TargetType="ListBoxItem">
+                                                    <Setter Property="Padding" Value="0"/>
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                </Style>
+                                            </ListBox.ItemContainerStyle>
+
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <DockPanel LastChildFill="False">
-                                                        <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center"/>
-                                                        <Button Content="X" DockPanel.Dock="Right" Width="20" Height="20" 
-                                                                Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0"
-                                                                Click="RemoveDayRule_Click" Tag="{Binding}"/>
-                                                    </DockPanel>
+                                                    <Border Background="transparent" BorderBrush="#7F8C8D" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                                        <DockPanel LastChildFill="False">
+                                                            <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                                                            <Button Content="X" DockPanel.Dock="Right" Padding="1" Width="16" Height="16" Cursor="Hand"
+                                                                    Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0" 
+                                                                    Click="RemoveDayRule_Click" Tag="{Binding}"/>
+                                                        </DockPanel>
+                                                    </Border>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                         </ListBox>
@@ -119,15 +135,29 @@
                                             <Button Content="Add" Width="50" Margin="10,0,0,0" Click="AddTimeRule_Click"/>
                                         </StackPanel>
 
-                                        <ListBox x:Name="TimeRulesList" Grid.Row="2" BorderBrush="#EEEEEE">
+                                        <ListBox x:Name="TimeRulesList" Grid.Row="2" BorderBrush="#EEEEEE" BorderThickness="1" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                            <ListBox.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ListBox.ItemsPanel>
+                                            <ListBox.ItemContainerStyle>
+                                                <Style TargetType="ListBoxItem">
+                                                    <Setter Property="Padding" Value="0"/>
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                </Style>
+                                            </ListBox.ItemContainerStyle>
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <DockPanel LastChildFill="False">
-                                                        <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center"/>
-                                                        <Button Content="X" DockPanel.Dock="Right" Width="20" Height="20" 
-                                                                Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0"
-                                                                Click="RemoveTimeRule_Click" Tag="{Binding}"/>
-                                                    </DockPanel>
+                                                    <Border Background="transparent" BorderBrush="#7F8C8D" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                                        <DockPanel LastChildFill="False">
+                                                            <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                                                            <Button Content="X" DockPanel.Dock="Right" Padding="1" Width="16" Height="16" Cursor="Hand"
+                                                                    Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0" 
+                                                                    Click="RemoveTimeRule_Click" Tag="{Binding}"/>
+                                                        </DockPanel>
+                                                    </Border>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                         </ListBox>
@@ -151,15 +181,29 @@
                                             <Button Content="Exclude Course" Width="100" Margin="10,0,0,0" Click="AddExclusion_Click"/>
                                         </StackPanel>
 
-                                        <ListBox x:Name="ExclusionList" Grid.Row="2" BorderBrush="#EEEEEE">
+                                        <ListBox x:Name="ExclusionList" Grid.Row="2" BorderBrush="#EEEEEE" BorderThickness="1" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                            <ListBox.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ListBox.ItemsPanel>
+                                            <ListBox.ItemContainerStyle>
+                                                <Style TargetType="ListBoxItem">
+                                                    <Setter Property="Padding" Value="0"/>
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                </Style>
+                                            </ListBox.ItemContainerStyle>
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <DockPanel LastChildFill="False">
-                                                        <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
-                                                        <Button Content="X" DockPanel.Dock="Right" Width="20" Height="20" 
-                                                                Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0"
-                                                                Click="RemoveExclusion_Click" Tag="{Binding}"/>
-                                                    </DockPanel>
+                                                    <Border Background="transparent" BorderBrush="#7F8C8D" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                                        <DockPanel LastChildFill="False">
+                                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                                                            <Button Content="X" DockPanel.Dock="Right" Padding="1" Width="16" Height="16" Cursor="Hand"
+                                                                    Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0" 
+                                                                    Click="RemoveExclusion_Click" Tag="{Binding}"/>
+                                                        </DockPanel>
+                                                    </Border>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                         </ListBox>
@@ -202,19 +246,33 @@
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                     <ComboBox x:Name="SplitExceptionInput" Width="100" Height="25" 
                                             IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="False"
-                                            KeyUp="CourseInput_KeyUp" ToolTip="Type to search Course Code (e.g. CS101)"/>
+                                            KeyUp="CourseInput_KeyUp" ToolTip="Type to search (e.g. CS101 - Lec)"/>
                                     <Button Content="Add Exception" Width="100" Margin="10,0,0,0" Click="AddSplitException_Click"/>
                                 </StackPanel>
 
-                                <ListBox x:Name="SplitExceptionList" Height="100" BorderBrush="#EEEEEE">
+                                <ListBox x:Name="SplitExceptionList" Height="100" BorderBrush="#EEEEEE" BorderThickness="1" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <DockPanel LastChildFill="False">
-                                                <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
-                                                <Button Content="X" DockPanel.Dock="Right" Width="20" Height="20" 
-                                                        Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0"
-                                                        Click="RemoveSplitException_Click" Tag="{Binding}"/>
-                                            </DockPanel>
+                                            <Border Background="transparent" BorderBrush="#7F8C8D" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                                <DockPanel LastChildFill="False">
+                                                    <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                                                    <Button Content="X" DockPanel.Dock="Right" Padding="1" Width="16" Height="16" Cursor="Hand"
+                                                            Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0" 
+                                                            Click="RemoveSplitException_Click" Tag="{Binding}"/>
+                                                </DockPanel>
+                                            </Border>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
