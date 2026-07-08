@@ -69,18 +69,41 @@ namespace UniversityScheduler.Views
         }
 
         private void ApplyToOpenWindows()
-      {
-         foreach (Window win in Application.Current.Windows)
-         {
-            string title = win.Title ?? "";
+        {
+            foreach (Window win in Application.Current.Windows)
+            {
+                string title = win.Title ?? "";
 
-            if (title.Contains("Instructors")) win.Topmost = GlobalSettings.InstructorsOnTop;
-            else if (title.Contains("Courses")) win.Topmost = GlobalSettings.CoursesOnTop;
-            else if (title.Contains("Class Sections")) win.Topmost = GlobalSettings.ClassesOnTop; // Matches "Class Sections Management"
-            else if (title.Contains("Rooms")) win.Topmost = GlobalSettings.RoomsOnTop;
-            else if (title.Contains("Statistics")) win.Topmost = GlobalSettings.StatsOnTop;
-            else if (title.Contains("Generator")) win.Topmost = GlobalSettings.GenerateOnTop; // Matches "Schedule Generator"
-         }
-      }
+                if (title.Contains("Instructors")) win.Topmost = GlobalSettings.InstructorsOnTop;
+                else if (title.Contains("Courses")) win.Topmost = GlobalSettings.CoursesOnTop;
+                else if (title.Contains("Class Sections")) win.Topmost = GlobalSettings.ClassesOnTop; // Matches "Class Sections Management"
+                else if (title.Contains("Rooms")) win.Topmost = GlobalSettings.RoomsOnTop;
+                else if (title.Contains("Statistics")) win.Topmost = GlobalSettings.StatsOnTop;
+                else if (title.Contains("Generator")) win.Topmost = GlobalSettings.GenerateOnTop; // Matches "Schedule Generator"
+            }
+        }
+    
+        private void ImportDb_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "SQLite Database (*.db)|*.db",
+                Title = "Select Old schedule.db File"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                string selectedPath = openFileDialog.FileName;
+                
+                // Open the new migration window
+                var migrationWin = new DatabaseMigrationWindow(selectedPath);
+                migrationWin.Topmost = true;
+                migrationWin.ShowDialog();
+                
+                // Close settings window if migration triggered a restart
+                this.Close();
+            }
+        }
+        
     }
 }

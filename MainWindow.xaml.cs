@@ -57,13 +57,13 @@ namespace UniversityScheduler
                 }
                 #if DEBUG
                     // 1. Independent Tables (Must be seeded first)
-                    DataSeeder.SeedRooms();
-                    DataSeeder.SeedCourses();
-                    DataSeeder.SeedStudentSections();
+                    // DataSeeder.SeedRooms();
+                    // DataSeeder.SeedCourses();
+                    // DataSeeder.SeedStudentSections();
                     // 2. Dependent Tables (Rely on the tables above)
-                    DataSeeder.SeedInstructors(); 
-                    DataSeeder.SeedCurriculum();  
-                    DataSeeder.SeedClassSchedules(); 
+                    // DataSeeder.SeedInstructors(); 
+                    // DataSeeder.SeedCurriculum();  
+                    // DataSeeder.SeedClassSchedules(); 
                 #endif
             }
             catch (Exception ex)

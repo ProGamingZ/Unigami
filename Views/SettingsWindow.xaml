@@ -51,13 +51,20 @@
 
                 </StackPanel>
             </GroupBox>
-
+            <GroupBox Header="Database Management" Padding="10" Margin="0,15,0,0">
+                <StackPanel>
+                    <TextBlock Text="Migrate an older schedule.db file to this new version without losing your data." Foreground="Gray" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                    
+                    <Button Content="Import Old Database (.db)" 
+                            Style="{StaticResource MasterSchedButtonStyle}" 
+                            Click="ImportDb_Click"/>
+                </StackPanel>
+            </GroupBox>
 
             
 
             <Button Content="Save &amp; Close" 
-                    Background="#27AE60" Foreground="White" FontWeight="SemiBold"
-                    Height="35" Margin="0,20,0,0" 
+                    Style="{StaticResource MasterSchedButtonStyle}" 
                     Click="Save_Click"/>
             
         </StackPanel>
