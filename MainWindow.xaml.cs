@@ -57,6 +57,7 @@ namespace UniversityScheduler
                 }
                 #if DEBUG
                     // 1. Independent Tables (Must be seeded first)
+                    // DataSeeder.SeedPrograms();
                     // DataSeeder.SeedRooms();
                     // DataSeeder.SeedCourses();
                     // DataSeeder.SeedStudentSections();

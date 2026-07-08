@@ -77,7 +77,7 @@ namespace UniversityScheduler.Views
             conn.Open();
             using (var cmd = new SqliteCommand("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='Rooms'", conn))
             {
-               long tableExists = (long)cmd.ExecuteScalar();
+               long tableExists = Convert.ToInt64(cmd.ExecuteScalar());
                if (tableExists == 0)
                {
                   throw new Exception("Invalid File. This is not a valid Unigami schedule.db backup.");
@@ -111,69 +111,61 @@ namespace UniversityScheduler.Views
 
             UpdateStatus(70, "Pumping data into new schema...");
 
-            // 3. Attach the old DB directly to the SQL engine for ultra-fast transferring
-            db.Database.ExecuteSql($"ATTACH DATABASE '{_tempDbPath}' AS OldDb");
-
-            // Turn off foreign keys temporarily just in case order gets weird
-            db.Database.ExecuteSqlRaw("PRAGMA foreign_keys = OFF;");
-
-            // Pump standard tables
-            db.Database.ExecuteSqlRaw(
-               "INSERT INTO main.Rooms (Id, Name, Type, Capacity, FloorLevel, ChairCount, TableCount, CeilingFanCount, StandFanCount, AirConCount, WhiteboardCount, MonitorCount, ComputerCount, ProjectorCount) " +
-               "SELECT Id, Name, Type, Capacity, FloorLevel, ChairCount, TableCount, CeilingFanCount, StandFanCount, AirConCount, WhiteboardCount, MonitorCount, ComputerCount, ProjectorCount FROM OldDb.Rooms");
-
-            db.Database.ExecuteSqlRaw(
-               "INSERT INTO main.Courses (Id, Code, Name, Units, LectureHours, LabHours, PrerequisiteCodes, RecommendedPrograms) " +
-               "SELECT Id, Code, Name, Units, LectureHours, LabHours, PrerequisiteCodes, RecommendedPrograms FROM OldDb.Courses");
-
-            db.Database.ExecuteSqlRaw(
-               "INSERT INTO main.Sections (Id, Program, YearLevel, Name, StudentCount) " +
-               "SELECT Id, Program, YearLevel, Name, StudentCount FROM OldDb.Sections");
-
-            db.Database.ExecuteSqlRaw(
-               "INSERT INTO main.Curriculums (Id, Program, YearLevel, Semester, CourseId) " +
-               "SELECT Id, Program, YearLevel, Semester, CourseId FROM OldDb.Curriculums");
-
-            db.Database.ExecuteSqlRaw(
-               "INSERT INTO main.Schedules (Id, RoomId, SectionId, CourseId, InstructorId, Day, StartTime, EndTime, Semester, Component) " +
-               "SELECT Id, RoomId, SectionId, CourseId, InstructorId, Day, StartTime, EndTime, Semester, Component FROM OldDb.Schedules");
-
-            // 4. Pump Instructors (Handling the dynamically added PreferredCourseCodes)
-            if (hasPreferredCourseCol)
+            // --- THE FIX: Force EF Core to keep the connection OPEN ---
+            db.Database.OpenConnection();
+            try
             {
+               // 3. Attach the old DB directly to the SQL engine for ultra-fast transferring
+               db.Database.ExecuteSql($"ATTACH DATABASE {_tempDbPath} AS OldDb");
+
+               // Turn off foreign keys temporarily just in case order gets weird
+               db.Database.ExecuteSqlRaw("PRAGMA foreign_keys = OFF;");
+
+               // --- THE BULLETPROOF PUMP ---
                db.Database.ExecuteSqlRaw(
-                  "INSERT INTO main.Instructors (Id, Name, Initials, Program, Status, MaxUnits, SchedulePreferences, IsScheduleLocked, PreferredYearLevels, AssignedRoomId, PreferredCourseCodes) " +
-                  "SELECT Id, Name, Initials, Program, Status, MaxUnits, SchedulePreferences, IsScheduleLocked, PreferredYearLevels, AssignedRoomId, PreferredCourseCodes FROM OldDb.Instructors");
-            }
-            else
-            {
+                  "INSERT INTO main.Rooms (Id, Name, Type, Capacity, FloorLevel, ChairCount, TableCount, CeilingFanCount, StandFanCount, AirConCount, WhiteboardCount, MonitorCount, ComputerCount, ProjectorCount) " +
+                  "SELECT Id, Name, Type, Capacity, FloorLevel, ChairCount, TableCount, CeilingFanCount, StandFanCount, AirConCount, WhiteboardCount, MonitorCount, ComputerCount, ProjectorCount FROM OldDb.Rooms");
+
                db.Database.ExecuteSqlRaw(
-                  "INSERT INTO main.Instructors (Id, Name, Initials, Program, Status, MaxUnits, SchedulePreferences, IsScheduleLocked, PreferredYearLevels, AssignedRoomId, PreferredCourseCodes) " +
-                  "SELECT Id, Name, Initials, Program, Status, MaxUnits, SchedulePreferences, IsScheduleLocked, PreferredYearLevels, AssignedRoomId, '' FROM OldDb.Instructors");
-            }
+                  "INSERT INTO main.Courses (Id, Code, Name, Units, LectureHours, LabHours, PrerequisiteCodes, RecommendedPrograms) " +
+                  "SELECT Id, Code, Name, Units, LectureHours, LabHours, PrerequisiteCodes, RecommendedPrograms FROM OldDb.Courses");
 
-            // 4. Pump Instructors (Handling the missing column dynamically)
-            if (hasPreferredCourseCol)
-            {
-               db.Database.ExecuteSqlRaw("INSERT INTO main.Instructors SELECT * FROM OldDb.Instructors");
-            }
-            else
-            {
-               // If it's an old DB, we explicitly list the columns and inject an empty string ('') into PreferredCourseCodes
-               string pumpCommand = 
-                  @"INSERT INTO main.Instructors 
-                  (Id, Name, Initials, Program, Status, MaxUnits, SchedulePreferences, IsScheduleLocked, PreferredYearLevels, AssignedRoomId, PreferredCourseCodes) 
-                  SELECT Id, Name, Initials, Program, Status, MaxUnits, SchedulePreferences, IsScheduleLocked, PreferredYearLevels, AssignedRoomId, '' 
-                  FROM OldDb.Instructors";
-               
-               db.Database.ExecuteSqlRaw(pumpCommand);
-            }
+               db.Database.ExecuteSqlRaw(
+                  "INSERT INTO main.Sections (Id, Program, YearLevel, Name, StudentCount) " +
+                  "SELECT Id, Program, YearLevel, Name, StudentCount FROM OldDb.Sections");
 
-            // Restore constraints and detach
-            db.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
-            db.Database.ExecuteSqlRaw("DETACH DATABASE OldDb");
+               db.Database.ExecuteSqlRaw(
+                  "INSERT INTO main.Curriculums (Id, Program, YearLevel, Semester, CourseId) " +
+                  "SELECT Id, Program, YearLevel, Semester, CourseId FROM OldDb.Curriculums");
+
+               db.Database.ExecuteSqlRaw(
+                  "INSERT INTO main.Schedules (Id, RoomId, SectionId, CourseId, InstructorId, Day, StartTime, EndTime, Semester, Component) " +
+                  "SELECT Id, RoomId, SectionId, CourseId, InstructorId, Day, StartTime, EndTime, Semester, Component FROM OldDb.Schedules");
+
+               // 4. Pump Instructors (Handling the dynamically added PreferredCourseCodes)
+               if (hasPreferredCourseCol)
+               {
+                  db.Database.ExecuteSqlRaw(
+                        "INSERT INTO main.Instructors (Id, Name, Initials, Program, Status, MaxUnits, SchedulePreferences, IsScheduleLocked, PreferredYearLevels, AssignedRoomId, PreferredCourseCodes) " +
+                        "SELECT Id, Name, Initials, Program, Status, MaxUnits, SchedulePreferences, IsScheduleLocked, PreferredYearLevels, AssignedRoomId, PreferredCourseCodes FROM OldDb.Instructors");
+               }
+               else
+               {
+                  db.Database.ExecuteSqlRaw(
+                        "INSERT INTO main.Instructors (Id, Name, Initials, Program, Status, MaxUnits, SchedulePreferences, IsScheduleLocked, PreferredYearLevels, AssignedRoomId, PreferredCourseCodes) " +
+                        "SELECT Id, Name, Initials, Program, Status, MaxUnits, SchedulePreferences, IsScheduleLocked, PreferredYearLevels, AssignedRoomId, '' FROM OldDb.Instructors");
+               }
+
+               // Restore constraints and detach
+               db.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
+               db.Database.ExecuteSqlRaw("DETACH DATABASE OldDb");
+            }
+            finally
+            {
+               // Ensure the connection is safely closed even if an error occurs
+               db.Database.CloseConnection();
+            }
          }
-
          UpdateStatus(90, "Finalizing settings...");
          System.Threading.Thread.Sleep(500); // Tiny pause so the UI feels smooth
       }

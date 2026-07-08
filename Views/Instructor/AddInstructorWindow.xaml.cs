@@ -168,10 +168,8 @@ namespace UniversityScheduler.Views
             {
                 if (db.Database.CanConnect())
                 {
-                    var programs = db.Sections
-                        .Where(s => s.Program != null)
-                        .Select(s => s.Program)
-                        .Distinct()
+                    var programs = db.Programs
+                        .Select(p => p.Code)
                         .OrderBy(p => p)
                         .ToList();
 
@@ -183,9 +181,10 @@ namespace UniversityScheduler.Views
                 }
             }
 
+            // Re-check the boxes if we are editing an existing item
             if (!string.IsNullOrEmpty(existingPrograms))
             {
-                var currentTags = existingPrograms.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var currentTags = existingPrograms.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries);
                 foreach (var item in AvailablePrograms)
                 {
                     if (currentTags.Contains(item.Name)) item.IsSelected = true;

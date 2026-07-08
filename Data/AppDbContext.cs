@@ -7,6 +7,7 @@ namespace UniversityScheduler.Data
         public DbSet<Instructor> Instructors { get; set; }
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Course> Courses { get; set; }
+        public DbSet<DegreeProgram> Programs { get; set; }
         public DbSet<StudentSection> Sections { get; set; }
         public DbSet<ClassSchedule> Schedules { get; set; }
         public DbSet<Curriculum> Curriculums { get; set; }

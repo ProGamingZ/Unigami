@@ -9,12 +9,7 @@
 
             <StackPanel Margin="0,0,0,15">
                 <TextBlock Text="Program:"/>
-                <ComboBox x:Name="ProgramCombo" Height="30" SelectedIndex="0" IsEditable="True">
-                    <ComboBoxItem Content="BSCS"/>
-                    <ComboBoxItem Content="BSIT"/>
-                    <ComboBoxItem Content="BSIS"/>
-                    <ComboBoxItem Content="BSEMC"/>
-                </ComboBox>
+                <ComboBox x:Name="ProgramCombo" Height="30" IsEditable="True"/>
             </StackPanel>
 
             <StackPanel Margin="0,0,0,15">

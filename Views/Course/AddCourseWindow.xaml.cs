@@ -56,21 +56,23 @@ namespace UniversityScheduler.Views
             {
                 if (db.Database.CanConnect())
                 {
-                    var programs = db.Sections
-                        .Where(s => s.Program != null)
-                        .Select(s => s.Program)
-                        .Distinct().OrderBy(p => p).ToList();
+                    var programs = db.Programs
+                        .Select(p => p.Code)
+                        .OrderBy(p => p)
+                        .ToList();
 
                     foreach (var p in programs)
                     {
-                        AvailablePrograms.Add(new SelectableProgram { Name = p, IsSelected = false });
+                        if (p != "General Education")
+                            AvailablePrograms.Add(new SelectableProgram { Name = p, IsSelected = false });
                     }
                 }
             }
 
+            // Re-check the boxes if we are editing an existing item
             if (!string.IsNullOrEmpty(existingPrograms))
             {
-                var currentTags = existingPrograms.Split(new[] { ',', ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+                var currentTags = existingPrograms.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var item in AvailablePrograms)
                 {
                     if (currentTags.Contains(item.Name)) item.IsSelected = true;

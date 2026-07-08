@@ -105,23 +105,23 @@ namespace UniversityScheduler.Views
         //Populates dropdowns on startup
             private void LoadInitialData()
             {
-                using (var db = new AppDbContext())
+                using var db = new AppDbContext();
+                if (!db.Database.CanConnect()) return;
+
+                var programs = db.Programs
+                    .Select(p => p.Code)
+                    .OrderBy(p => p)
+                    .ToList();
+
+                ProgramSelector.Items.Clear();
+                ProgramSelector.Items.Add(new ComboBoxItem { Content = "All", Tag = "All", IsSelected = true });
+
+                foreach (var p in programs)
                 {
-                    if (!db.Database.CanConnect()) return;
-
-                    var programs = db.Sections
-                        .Where(s => s.Program != null)
-                        .Select(s => s.Program)
-                        .Distinct()
-                        .OrderBy(p => p)
-                        .ToList();
-
-                    ProgramSelector.Items.Clear();
-                    ProgramSelector.Items.Add(new ComboBoxItem { Content = "All", Tag = "All", IsSelected = true });
-                    foreach (var p in programs) ProgramSelector.Items.Add(new ComboBoxItem { Content = p, Tag = p });
-
-                    UpdateDynamicFilters(db);
+                    ProgramSelector.Items.Add(new ComboBoxItem { Content = p, Tag = p });
                 }
+
+                UpdateDynamicFilters(db);
             }
         //Cascading dropdown logic
             private void UpdateDynamicFilters(AppDbContext db)

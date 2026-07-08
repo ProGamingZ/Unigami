@@ -33,6 +33,7 @@ namespace UniversityScheduler.Views
         public AddCurriculumWindow(int targetSemester)
         {
             InitializeComponent();
+            LoadPrograms();
             LoadCourses();
             
             // Set Target Semester
@@ -81,6 +82,17 @@ namespace UniversityScheduler.Views
             }
             
             FilterCourses();
+        }
+
+        private void LoadPrograms()
+        {
+            using var db = new AppDbContext();
+            if (db.Database.CanConnect())
+            {
+                var programs = db.Programs.Select(p => p.Code).OrderBy(p => p).ToList();
+                ProgramCombo.ItemsSource = programs;
+                if (programs.Count > 0) ProgramCombo.SelectedIndex = 0;
+            }
         }
 
         private void LoadCourses()

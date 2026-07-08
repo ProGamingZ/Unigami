@@ -142,6 +142,21 @@ namespace UniversityScheduler.Data
                 db.SaveChanges();
             }
         }
+        public static void SeedPrograms()
+        {
+            using (var db = new AppDbContext())
+            {
+                if (db.Programs.Any()) return;
+
+                db.Programs.AddRange(
+                    new DegreeProgram { Code = "BSCS", Description = "Computer Science" },
+                    new DegreeProgram { Code = "BSIT", Description = "Information Technology" },
+                    new DegreeProgram { Code = "BSIS", Description = "Information Systems" },
+                    new DegreeProgram { Code = "BSEMC", Description = "Entertainment & Multimedia Computing" }
+                );
+                db.SaveChanges();
+            }
+        }
         public static void SeedInstructors()
         {
             using (var db = new AppDbContext())

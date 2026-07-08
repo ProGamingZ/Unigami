@@ -9,7 +9,6 @@ namespace UniversityScheduler.Views
 {
     public partial class CoursesView : UserControl
     {
-        // FIX: Define the cache variable here
         private List<Course> _allCourses = new List<Course>();
 
         public CoursesView()
@@ -43,6 +42,13 @@ namespace UniversityScheduler.Views
                 ).ToList();
                 CoursesGrid.ItemsSource = filtered;
             }
+        }
+
+        private void ManagePrograms_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new ManageProgramsWindow();
+            win.Topmost = true;
+            win.ShowDialog();
         }
 
         private void Add_Click(object sender, RoutedEventArgs e)

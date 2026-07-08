@@ -79,11 +79,20 @@
                     Margin="0,0,10,0" 
                     Click="Delete_Click"/>
 
+            <Button Content="Manage Programs" 
+                    Style="{StaticResource SecondaryButton}"
+                    Width="140" 
+                    Height="35" 
+                    Margin="0,0,10,0"
+                    Click="ManagePrograms_Click"/>
+
             <Button Content="Add Course" 
                     Style="{StaticResource PrimaryButton}"
                     Width="140" 
                     Height="35" 
                     Click="Add_Click"/>
+
+            
         </StackPanel>
     </Grid>
 </UserControl>

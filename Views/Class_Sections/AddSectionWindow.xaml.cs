@@ -8,14 +8,26 @@ namespace UniversityScheduler.Views
     {
         private int _editingId = 0;
 
+        private void LoadPrograms()
+        {
+            using var db = new AppDbContext();
+            if (db.Database.CanConnect())
+            {
+                var programs = db.Programs.Select(p => p.Code).OrderBy(p => p).ToList();
+                ProgramCombo.ItemsSource = programs;
+                if (programs.Count > 0) ProgramCombo.SelectedIndex = 0;
+            }
+        }
         public AddSectionWindow()
         {
             InitializeComponent();
+            LoadPrograms();
         }
 
         public AddSectionWindow(StudentSection sectionToEdit)
         {
             InitializeComponent();
+            LoadPrograms();
             _editingId = sectionToEdit.Id;
             this.Title = "Edit Section";
 
