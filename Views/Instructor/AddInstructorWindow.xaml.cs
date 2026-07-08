@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using UniversityScheduler.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace UniversityScheduler.Views
 {
@@ -19,10 +20,18 @@ namespace UniversityScheduler.Views
         public string DisplayString { get; set; } = string.Empty;
         public string ValueString { get; set; } = string.Empty;
     }
+    public class PreferredCourseItem
+    {
+        public string Code { get; set; } = string.Empty;
+        public string DisplayString { get; set; } = string.Empty;
+        public string FullDisplay => $"{Code} - {DisplayString}";
+    }
 
     public partial class AddInstructorWindow : Window
     {
         private ObservableCollection<TimeBlockItem> _timeBlocks = new ObservableCollection<TimeBlockItem>();
+        private ObservableCollection<PreferredCourseItem> _preferredCourses = new ObservableCollection<PreferredCourseItem>();
+        private List<PreferredCourseItem> _allDatabaseCourses = new List<PreferredCourseItem>();
         public ObservableCollection<SelectableProgram> AvailablePrograms { get; set; } = new ObservableCollection<SelectableProgram>();
         private int _editingId = 0; 
 
@@ -115,12 +124,28 @@ namespace UniversityScheduler.Views
                     }
                 }
             }
+
+            if (!string.IsNullOrEmpty(instructorToEdit.PreferredCourseCodes))
+            {
+                var codes = instructorToEdit.PreferredCourseCodes.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                using (var db = new AppDbContext())
+                {
+                    foreach (var code in codes)
+                    {
+                        var c = db.Courses.FirstOrDefault(x => x.Code == code);
+                        if (c != null)
+                            _preferredCourses.Add(new PreferredCourseItem { Code = c.Code, DisplayString = c.Name });
+                    }
+                }
+            }
+
         }
 
         private void InitializeLists()
         {
             PreferencesList.ItemsSource = _timeBlocks;
             ProgramCheckList.ItemsSource = AvailablePrograms;
+            PreferredCoursesList.ItemsSource = _preferredCourses;
         }
 
         private void LoadRooms()
@@ -165,6 +190,72 @@ namespace UniversityScheduler.Views
                 {
                     if (currentTags.Contains(item.Name)) item.IsSelected = true;
                 }
+            }
+        }
+
+        private void PreferredCourseCombo_DropDownOpened(object sender, EventArgs e)
+        {
+            // 1. Figure out what programs and years the user has selected
+            var selectedProgs = AvailablePrograms.Where(p => p.IsSelected).Select(p => p.Name).ToList();
+            
+            List<int> selectedYears = new List<int>();
+            if (CbYear1.IsChecked == true) selectedYears.Add(1);
+            if (CbYear2.IsChecked == true) selectedYears.Add(2);
+            if (CbYear3.IsChecked == true) selectedYears.Add(3);
+            if (CbYear4.IsChecked == true) selectedYears.Add(4);
+
+            using (var db = new AppDbContext())
+            {
+                // Find all curriculums that match the selected programs AND selected years
+                var validCourses = db.Curriculums
+                    .Include(c => c.Course)
+                    .Where(c => selectedProgs.Contains(c.Program) && selectedYears.Contains(c.YearLevel))
+                    .Select(c => c.Course)
+                    .Distinct()
+                    .Where(c => c != null)
+                    .ToList();
+
+                // Convert to our UI item
+                _allDatabaseCourses = validCourses.Select(c => new PreferredCourseItem 
+                { 
+                    Code = c!.Code, 
+                    DisplayString = c.Name 
+                }).OrderBy(c => c.Code).ToList();
+
+                PreferredCourseCombo.ItemsSource = _allDatabaseCourses;
+            }
+
+            if (_allDatabaseCourses.Count == 0)
+            {
+                MessageBox.Show("No courses found. Please ensure you have selected at least one Program and one Year Level above.", "Filter Notice", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void AddPreferredCourse_Click(object sender, RoutedEventArgs e)
+        {
+            if (PreferredCourseCombo.SelectedItem is PreferredCourseItem selectedCourse)
+            {
+                if (_preferredCourses.Any(c => c.Code == selectedCourse.Code))
+                {
+                    MessageBox.Show("This course is already in the preferred list.");
+                    return;
+                }
+
+                _preferredCourses.Add(selectedCourse);
+                PreferredCourseCombo.SelectedItem = null;
+                PreferredCourseCombo.Text = "";
+            }
+            else
+            {
+                MessageBox.Show("Please select a valid course from the dropdown.");
+            }
+        }
+
+        private void RemovePreferredCourse_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is PreferredCourseItem item)
+            {
+                _preferredCourses.Remove(item);
             }
         }
 
@@ -273,6 +364,7 @@ namespace UniversityScheduler.Views
 
             string finalProgramStr = string.Join(", ", selectedProgs);
             string finalSchedule = string.Join(";", _timeBlocks.Select(b => b.ValueString));
+            string finalCoursePrefs = string.Join(",", _preferredCourses.Select(c => c.Code));
 
             using (var db = new AppDbContext())
             {
@@ -287,7 +379,8 @@ namespace UniversityScheduler.Views
                         MaxUnits = units,
                         SchedulePreferences = finalSchedule,
                         AssignedRoomId = roomId,
-                        PreferredYearLevels = yearString
+                        PreferredYearLevels = yearString,
+                        PreferredCourseCodes = finalCoursePrefs
                     };
                     db.Instructors.Add(newInstructor);
                 }
@@ -304,6 +397,7 @@ namespace UniversityScheduler.Views
                         existing.SchedulePreferences = finalSchedule;
                         existing.AssignedRoomId = roomId;
                         existing.PreferredYearLevels = yearString;
+                        existing.PreferredCourseCodes = finalCoursePrefs;
                     }
                 }
                 db.SaveChanges();

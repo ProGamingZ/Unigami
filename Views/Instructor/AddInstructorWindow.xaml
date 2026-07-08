@@ -6,169 +6,207 @@
         WindowStartupLocation="CenterScreen" 
         ResizeMode="CanResizeWithGrip" Icon="/UNIGAMIicon128.ico">
     
-    <Border Padding="20" Background="#F7F9F9">
-        <StackPanel>
-            <TextBlock Text="New Instructor Details" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+    <ScrollViewer
+        VerticalScrollBarVisibility="Auto"
+        HorizontalScrollBarVisibility="Disabled">
 
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="100"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                    <TextBlock Text="Full Name:"/>
-                    <TextBox x:Name="NameTxt" Height="30" TextChanged="NameTxt_TextChanged"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1">
-                    <TextBlock Text="Initials:"/>
-                    <TextBox x:Name="InitialsTxt" Height="30"/>
-                </StackPanel>
-            </Grid>
+        <Border Padding="20" Background="#F7F9F9">
+            <StackPanel>
+                <TextBlock Text="New Instructor Details" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
 
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/> 
-                    <ColumnDefinition Width="*"/> 
-                </Grid.ColumnDefinitions>
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="100"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <TextBlock Text="Full Name:"/>
+                        <TextBox x:Name="NameTxt" Height="30" TextChanged="NameTxt_TextChanged"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Initials:"/>
+                        <TextBox x:Name="InitialsTxt" Height="30"/>
+                    </StackPanel>
+                </Grid>
 
-                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                    <TextBlock Text="Assigned Room (Home Room):" Margin="0,0,0,2"/>
-                    <ComboBox x:Name="AssignedRoomCombo" 
-                              Height="30" 
-                              DisplayMemberPath="Name" 
-                              SelectedValuePath="Id"
-                              IsEditable="True"/>
-                    <TextBlock Text="(Leave empty if no specific room)" FontSize="10" Foreground="Gray" Margin="2,0,0,0"/>
-                </StackPanel>
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/> 
+                        <ColumnDefinition Width="*"/> 
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="1">
-                    <TextBlock Text="Preferred Year Levels:" Margin="0,0,0,2"/>
-                    <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Padding="5">
-                        <UniformGrid Columns="2">
-                            <CheckBox x:Name="CbYear1" Content="1st Year" Margin="2"/>
-                            <CheckBox x:Name="CbYear2" Content="2nd Year" Margin="2"/>
-                            <CheckBox x:Name="CbYear3" Content="3rd Year" Margin="2"/>
-                            <CheckBox x:Name="CbYear4" Content="4th Year" Margin="2"/>
-                        </UniformGrid>
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <TextBlock Text="Assigned Room (Home Room):" Margin="0,0,0,2"/>
+                        <ComboBox x:Name="AssignedRoomCombo" 
+                                Height="30" 
+                                DisplayMemberPath="Name" 
+                                SelectedValuePath="Id"
+                                IsEditable="True"/>
+                        <TextBlock Text="(Leave empty if no specific room)" FontSize="10" Foreground="Gray" Margin="2,0,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Preferred Year Levels:" Margin="0,0,0,2"/>
+                        <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Padding="5">
+                            <UniformGrid Columns="2">
+                                <CheckBox x:Name="CbYear1" Content="1st Year" Margin="2"/>
+                                <CheckBox x:Name="CbYear2" Content="2nd Year" Margin="2"/>
+                                <CheckBox x:Name="CbYear3" Content="3rd Year" Margin="2"/>
+                                <CheckBox x:Name="CbYear4" Content="4th Year" Margin="2"/>
+                            </UniformGrid>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+
+
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <TextBlock Text="Employment Status:"/>
+                        <ComboBox x:Name="StatusCombo" Height="30" SelectedIndex="0">
+                            <ComboBoxItem Content="Full-time"/>
+                            <ComboBoxItem Content="Part-time"/>
+                            <ComboBoxItem Content="Visiting"/>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Max Units (0-24):"/>
+                        <TextBox x:Name="UnitsTxt" Height="30" Text="24"/>
+                    </StackPanel>
+                </Grid>
+                
+                <StackPanel Margin="0,0,0,15">
+                    <TextBlock Text="Select Programs:" Margin="0,0,0,5"/>
+                    <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Height="100">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="ProgramCheckList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="10,5" Foreground="#2C3E50" FontSize="13"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </Border>
                 </StackPanel>
-            </Grid>
 
+                <Separator Margin="0,10"/>
 
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                    <TextBlock Text="Employment Status:"/>
-                    <ComboBox x:Name="StatusCombo" Height="30" SelectedIndex="0">
-                        <ComboBoxItem Content="Full-time"/>
-                        <ComboBoxItem Content="Part-time"/>
-                        <ComboBoxItem Content="Visiting"/>
-                    </ComboBox>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                    <TextBlock Text="Step 1: Select Preferred Days" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Button Content="All" Margin="10,0,5,0" Padding="5,0" Height="20" Click="SelectAllDays_Click"/>
+                    <Button Content="None" Padding="5,0" Height="20" Click="SelectNoDays_Click"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1">
-                    <TextBlock Text="Max Units (0-24):"/>
-                    <TextBox x:Name="UnitsTxt" Height="30" Text="24"/>
-                </StackPanel>
-            </Grid>
-            
-            <StackPanel Margin="0,0,0,15">
-                <TextBlock Text="Select Programs:" Margin="0,0,0,5"/>
-                <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Height="100">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ItemsControl x:Name="ProgramCheckList">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="10,5" Foreground="#2C3E50" FontSize="13"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </Border>
+                
+                <WrapPanel x:Name="DayCheckboxes" Margin="0,0,0,10">
+                    <CheckBox Content="Mon" Margin="0,0,15,0" IsChecked="True"/>
+                    <CheckBox Content="Tue" Margin="0,0,15,0" IsChecked="True"/>
+                    <CheckBox Content="Wed" Margin="0,0,15,0" IsChecked="True"/>
+                    <CheckBox Content="Thu" Margin="0,0,15,0" IsChecked="True"/>
+                    <CheckBox Content="Fri" Margin="0,0,15,0" IsChecked="True"/>
+                    <CheckBox Content="Sat" Margin="0,0,15,0" IsChecked="True"/>
+                </WrapPanel>
+
+                <TextBlock Text="Step 2: Select Time Range" FontWeight="Bold" Margin="0,0,0,5"/>
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="30"/>   <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>    <ColumnDefinition Width="Auto"/> </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <ComboBox x:Name="StartHourCombo" Width="50" SelectedIndex="6">
+                            <System:String>1</System:String> <System:String>2</System:String> <System:String>3</System:String>
+                            <System:String>4</System:String> <System:String>5</System:String> <System:String>6</System:String>
+                            <System:String>7</System:String> <System:String>8</System:String> <System:String>9</System:String>
+                            <System:String>10</System:String> <System:String>11</System:String> <System:String>12</System:String>
+                        </ComboBox>
+                        <TextBlock Text=":" VerticalAlignment="Center" Margin="5,0"/>
+                        <ComboBox x:Name="StartMinCombo" Width="50" SelectedIndex="0">
+                            <System:String>00</System:String> <System:String>15</System:String>
+                            <System:String>30</System:String> <System:String>45</System:String>
+                        </ComboBox>
+                        <ComboBox x:Name="StartAmPmCombo" Width="55" SelectedIndex="0" Margin="5,0,0,0">
+                            <System:String>AM</System:String> <System:String>PM</System:String>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="1" Text="to" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold" Foreground="Gray"/>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <ComboBox x:Name="EndHourCombo" Width="50" SelectedIndex="4">
+                            <System:String>1</System:String> <System:String>2</System:String> <System:String>3</System:String>
+                            <System:String>4</System:String> <System:String>5</System:String> <System:String>6</System:String>
+                            <System:String>7</System:String> <System:String>8</System:String> <System:String>9</System:String>
+                            <System:String>10</System:String> <System:String>11</System:String> <System:String>12</System:String>
+                        </ComboBox>
+                        <TextBlock Text=":" VerticalAlignment="Center" Margin="5,0"/>
+                        <ComboBox x:Name="EndMinCombo" Width="50" SelectedIndex="0">
+                            <System:String>00</System:String> <System:String>15</System:String>
+                            <System:String>30</System:String> <System:String>45</System:String>
+                        </ComboBox>
+                        <ComboBox x:Name="EndAmPmCombo" Width="55" SelectedIndex="1" Margin="5,0,0,0">
+                            <System:String>AM</System:String> <System:String>PM</System:String>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <Button Grid.Column="4" Content="Add Block" Width="80" Style="{StaticResource SecondaryButton}" Click="AddBlock_Click"/>
+                </Grid>
+
+                <TextBlock Text="Current Schedule Preferences:" FontWeight="Bold" Margin="0,10,0,5"/>
+                <ListBox x:Name="PreferencesList" Height="100" Margin="0,0,0,20" BorderBrush="Gray" BorderThickness="1">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                <Button Grid.Column="1" Content="Remove" Background="#E74C3C" Foreground="White" 
+                                        FontSize="10" Padding="5,2" Margin="10,0,0,0"
+                                        Click="RemoveBlock_Click" Tag="{Binding}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock Text="Step 3: Select Preferred Courses (Optional)" FontWeight="Bold" Margin="0,0,0,5"/>
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ComboBox x:Name="PreferredCourseCombo" Height="30" 
+                            DisplayMemberPath="FullDisplay" SelectedValuePath="Code"
+                            IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="True" TextSearch.TextPath="FullDisplay"
+                            DropDownOpened="PreferredCourseCombo_DropDownOpened"/>
+
+                    <Button Grid.Column="1" Content="Add Course" Width="80" Margin="10,0,0,0" Style="{StaticResource SecondaryButton}" Click="AddPreferredCourse_Click"/>
+                </Grid>
+
+                <TextBlock Text="Course Preferences:" FontWeight="Bold" Margin="0,0,0,5"/>
+                <ListBox x:Name="PreferredCoursesList" Height="100" Margin="0,0,0,20" BorderBrush="Gray" BorderThickness="1">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#2980B9"/>
+                                <Button Grid.Column="1" Content="Remove" Background="#E74C3C" Foreground="White" 
+                                        FontSize="10" Padding="5,2" Margin="10,0,0,0"
+                                        Click="RemovePreferredCourse_Click" Tag="{Binding}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Button Content="Save Instructor" Height="35" Style="{StaticResource PrimaryButton}" Margin="0,10,0,0" Click="Save_Click"/>
             </StackPanel>
-
-            <Separator Margin="0,10"/>
-
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                <TextBlock Text="Step 1: Select Preferred Days" FontWeight="Bold" VerticalAlignment="Center"/>
-                <Button Content="All" Margin="10,0,5,0" Padding="5,0" Height="20" Click="SelectAllDays_Click"/>
-                <Button Content="None" Padding="5,0" Height="20" Click="SelectNoDays_Click"/>
-            </StackPanel>
-            
-            <WrapPanel x:Name="DayCheckboxes" Margin="0,0,0,10">
-                <CheckBox Content="Mon" Margin="0,0,15,0" IsChecked="True"/>
-                <CheckBox Content="Tue" Margin="0,0,15,0" IsChecked="True"/>
-                <CheckBox Content="Wed" Margin="0,0,15,0" IsChecked="True"/>
-                <CheckBox Content="Thu" Margin="0,0,15,0" IsChecked="True"/>
-                <CheckBox Content="Fri" Margin="0,0,15,0" IsChecked="True"/>
-                <CheckBox Content="Sat" Margin="0,0,15,0" IsChecked="True"/>
-            </WrapPanel>
-
-            <TextBlock Text="Step 2: Select Time Range" FontWeight="Bold" Margin="0,0,0,5"/>
-            <Grid Margin="0,0,0,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="30"/>   <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>    <ColumnDefinition Width="Auto"/> </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <ComboBox x:Name="StartHourCombo" Width="50" SelectedIndex="6">
-                        <System:String>1</System:String> <System:String>2</System:String> <System:String>3</System:String>
-                        <System:String>4</System:String> <System:String>5</System:String> <System:String>6</System:String>
-                        <System:String>7</System:String> <System:String>8</System:String> <System:String>9</System:String>
-                        <System:String>10</System:String> <System:String>11</System:String> <System:String>12</System:String>
-                    </ComboBox>
-                    <TextBlock Text=":" VerticalAlignment="Center" Margin="5,0"/>
-                    <ComboBox x:Name="StartMinCombo" Width="50" SelectedIndex="0">
-                        <System:String>00</System:String> <System:String>15</System:String>
-                        <System:String>30</System:String> <System:String>45</System:String>
-                    </ComboBox>
-                    <ComboBox x:Name="StartAmPmCombo" Width="55" SelectedIndex="0" Margin="5,0,0,0">
-                        <System:String>AM</System:String> <System:String>PM</System:String>
-                    </ComboBox>
-                </StackPanel>
-
-                <TextBlock Grid.Column="1" Text="to" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold" Foreground="Gray"/>
-
-                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <ComboBox x:Name="EndHourCombo" Width="50" SelectedIndex="4">
-                        <System:String>1</System:String> <System:String>2</System:String> <System:String>3</System:String>
-                        <System:String>4</System:String> <System:String>5</System:String> <System:String>6</System:String>
-                        <System:String>7</System:String> <System:String>8</System:String> <System:String>9</System:String>
-                        <System:String>10</System:String> <System:String>11</System:String> <System:String>12</System:String>
-                    </ComboBox>
-                    <TextBlock Text=":" VerticalAlignment="Center" Margin="5,0"/>
-                    <ComboBox x:Name="EndMinCombo" Width="50" SelectedIndex="0">
-                        <System:String>00</System:String> <System:String>15</System:String>
-                        <System:String>30</System:String> <System:String>45</System:String>
-                    </ComboBox>
-                    <ComboBox x:Name="EndAmPmCombo" Width="55" SelectedIndex="1" Margin="5,0,0,0">
-                        <System:String>AM</System:String> <System:String>PM</System:String>
-                    </ComboBox>
-                </StackPanel>
-
-                <Button Grid.Column="4" Content="Add Block" Width="80" Style="{StaticResource SecondaryButton}" Click="AddBlock_Click"/>
-            </Grid>
-
-            <TextBlock Text="Current Schedule Preferences:" FontWeight="Bold" Margin="0,10,0,5"/>
-            <ListBox x:Name="PreferencesList" Height="100" Margin="0,0,0,20" BorderBrush="Gray" BorderThickness="1">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Margin="0,2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                            <Button Grid.Column="1" Content="Remove" Background="#E74C3C" Foreground="White" 
-                                    FontSize="10" Padding="5,2" Margin="10,0,0,0"
-                                    Click="RemoveBlock_Click" Tag="{Binding}"/>
-                        </Grid>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-
-            <Button Content="Save Instructor" Height="35" Style="{StaticResource PrimaryButton}" Margin="0,10,0,0" Click="Save_Click"/>
-        </StackPanel>
-    </Border>
+        </Border>
+    </ScrollViewer>
 </Window>

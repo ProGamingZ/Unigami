@@ -19,8 +19,10 @@ namespace UniversityScheduler.Data
         public bool IsScheduleLocked { get; set; } = false;
 
 
-        // NEW: Preferred Year Levels (Stored as "1,2" or "3,4")
+        //Preferred Year Levels (Stored as "1,2" or "3,4")
         public string PreferredYearLevels { get; set; } = string.Empty; 
+        //Preferred Course Codes (Stored as "CS101,IT102")
+        public string PreferredCourseCodes { get; set; } = string.Empty;
 
         // NEW: Assigned "Home" Room
         public int? AssignedRoomId { get; set; }

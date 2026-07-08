@@ -50,16 +50,27 @@ namespace UniversityScheduler
 
             try
             {
-                DataSeeder.SeedCurriculum();
+                // and build all the tables/columns based on your C# models before seeding. ---
+                using (var db = new AppDbContext())
+                {
+                    db.Database.EnsureCreated();
+                }
+                #if DEBUG
+                    // 1. Independent Tables (Must be seeded first)
+                    DataSeeder.SeedRooms();
+                    DataSeeder.SeedCourses();
+                    DataSeeder.SeedStudentSections();
+                    // 2. Dependent Tables (Rely on the tables above)
+                    DataSeeder.SeedInstructors(); 
+                    DataSeeder.SeedCurriculum();  
+                    DataSeeder.SeedClassSchedules(); 
+                #endif
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Database Error during startup:\n{ex.Message}\n\n{ex.InnerException?.Message}", 
                                 "Startup Crash", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
-
-            DataSeeder.SeedCurriculum();
             this.Loaded += MainWindow_Loaded;
             
             DatabaseUpdated += () => 

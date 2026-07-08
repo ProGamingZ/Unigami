@@ -445,7 +445,14 @@ namespace UniversityScheduler.Services
                 if (!string.IsNullOrEmpty(instr.PreferredYearLevels))
                 {
                     var years = instr.PreferredYearLevels.Split(',');
-                    if (years.Contains(sched.Section?.YearLevel.ToString())) score += 5;
+                    if (sched.Section != null && years.Contains(sched.Section.YearLevel.ToString())) score += 5;
+                }
+
+                // Bonus: Preferred Specific Course (+30 priority points)
+                if (!string.IsNullOrEmpty(instr.PreferredCourseCodes) && sched.Course != null)
+                {
+                    var preferredCourses = instr.PreferredCourseCodes.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    if (preferredCourses.Contains(sched.Course.Code)) score += 30;
                 }
 
                 // Bonus: Owns the Room
