@@ -17,7 +17,7 @@ namespace UniversityScheduler
       private void LoadInstructorData()
       {
          using var db = new AppDbContext();
-         _allInstructors = db.Instructors.OrderBy(i => i.Surname).ThenBy(i => i.FirstName).ToList();
+         _allInstructors = [.. db.Instructors.OrderBy(i => i.Surname).ThenBy(i => i.FirstName)];
          UpdateInstructorList("All");
       }
       private void UpdateInstructorList(string programFilter)

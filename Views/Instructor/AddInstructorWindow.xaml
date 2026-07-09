@@ -66,7 +66,7 @@
                         <TextBlock Text="Assigned Room (Home Room):" Margin="0,0,0,2"/>
                         <ComboBox x:Name="AssignedRoomCombo" 
                                 Height="30" 
-                                DisplayMemberPath="Name" 
+                                DisplayMemberPath="FullName" 
                                 SelectedValuePath="Id"
                                 IsEditable="True"/>
                         <TextBlock Text="(Leave empty if no specific room)" FontSize="10" Foreground="Gray" Margin="2,0,0,0"/>
@@ -229,7 +229,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <TextBlock Text="Step 3: Select Preferred Courses (Optional)" FontWeight="Bold" Margin="0,0,0,5"/>
+                <TextBlock Text="Step 3: Assign Specific Courses " FontWeight="Bold" Margin="0,0,0,5"/>
                 <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -244,7 +244,7 @@
                     <Button Grid.Column="1" Content="Add Course" Width="80" Margin="10,0,0,0" Style="{StaticResource SecondaryButton}" Click="AddPreferredCourse_Click"/>
                 </Grid>
 
-                <TextBlock Text="Course Preferences:" FontWeight="Bold" Margin="0,0,0,5"/>
+                <TextBlock Text="Courses Assigned:" FontWeight="Bold" Margin="0,0,0,5"/>
                 <ListBox x:Name="PreferredCoursesList" Height="100" Margin="0,0,0,20" BorderBrush="Gray" BorderThickness="1">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -253,7 +253,7 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding FullDisplay}" VerticalAlignment="Center" FontWeight="SemiBold"/>
                                 <Button Grid.Column="1" Content="Remove" Background="#E74C3C" Foreground="White" 
                                         FontSize="10" Padding="5,2" Margin="10,0,0,0"
                                         Click="RemovePreferredCourse_Click" Tag="{Binding}"/>

@@ -451,7 +451,7 @@
                                 <ComboBox x:Name="InstructorSelector" 
                                         Grid.Column="2" 
                                         Height="30" 
-                                        DisplayMemberPath="Name"
+                                        DisplayMemberPath="FullName"
                                         SelectionChanged="InstructorSelector_SelectionChanged"/>
                             </Grid>
                             <Grid>
@@ -609,7 +609,7 @@
                                 <ComboBox x:Name="RoomSelector" 
                                         Grid.Column="2" 
                                         Height="30" 
-                                        DisplayMemberPath="Name" 
+                                        DisplayMemberPath="FullName" 
                                         SelectionChanged="RoomSelector_SelectionChanged"/>
                             </Grid>
 
