@@ -1,23 +1,122 @@
 <Window x:Class="UniversityScheduler.Views.DatabaseMigrationWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Database Migration Tool" Height="300" Width="450" 
+        Title="Database Import Wizard" Height="720" Width="1280" 
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Topmost="True"
         Background="#F7F9F9" Icon="/UNIGAMIicon128.ico">
 
-    <Border Padding="20">
-        <StackPanel VerticalAlignment="Center">
-            
-            <TextBlock Text="Database Data Pump" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" HorizontalAlignment="Center"/>
-            <TextBlock Text="Upgrading and migrating your old data..." Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,25"/>
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/> <RowDefinition Height="Auto"/> </Grid.RowDefinitions>
 
-            <ProgressBar x:Name="MigrationProgress" Height="20" Minimum="0" Maximum="100" Value="0" Margin="0,0,0,15"/>
-            
-            <TextBlock x:Name="StatusText" Text="Ready to begin." FontSize="14" FontWeight="SemiBold" Foreground="#34495E" HorizontalAlignment="Center" Margin="0,0,0,25"/>
+        <TabControl x:Name="WizardTabs" Grid.Row="0" Background="Transparent" BorderThickness="0">
+            <TabControl.ItemContainerStyle>
+                <Style TargetType="TabItem">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </Style>
+            </TabControl.ItemContainerStyle>
 
-            <Button x:Name="StartBtn" Content="Start Migration" Style="{StaticResource MasterSchedButtonStyle}"  Click="StartBtn_Click"/>
-            <Button x:Name="RestartBtn" Content="Restart Application" Style="{StaticResource MasterSchedButtonStyle}" Visibility="Collapsed" Click="RestartBtn_Click"/>
+            <TabItem>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-        </StackPanel>
-    </Border>
+                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                        <TextBlock Text="Step 1: Analyzing Database Backup" FontSize="20" FontWeight="Bold" Foreground="#2C3E50"/>
+                        <TextBlock Text="Comparing your old backup structure to the current system requirements." Foreground="Gray" Margin="0,5,0,0"/>
+                    </StackPanel>
+                    
+                    <DataGrid x:Name="SchemaGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Background="White" BorderBrush="#BDC3C7">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Table Name" Binding="{Binding TableName}" Width="200" FontWeight="SemiBold"/>
+                            <DataGridTextColumn Header="Rows Found" Binding="{Binding RowCount}" Width="100"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                        <TextBlock Text="Step 2: Select Data to Import" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,5"/>
+                        <TextBlock Text="Choose which specific master records you want to salvage from the backup." Foreground="Gray" Margin="0,0,0,15"/>
+                    </StackPanel>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <GroupBox Grid.Column="0" Header="Master Tables">
+                            <ListBox x:Name="MasterTableList" SelectionChanged="MasterTableList_SelectionChanged" BorderThickness="0" Background="Transparent">
+                                <ListBoxItem Content="Instructors" Tag="Instructors" FontWeight="SemiBold" Padding="5"/>
+                                <ListBoxItem Content="Rooms" Tag="Rooms" FontWeight="SemiBold" Padding="5"/>
+                                <ListBoxItem Content="Courses" Tag="Courses" FontWeight="SemiBold" Padding="5"/>
+                                <ListBoxItem Content="Sections" Tag="Sections" FontWeight="SemiBold" Padding="5"/>
+                            </ListBox>
+                        </GroupBox>
+
+                        <GroupBox x:Name="RowSelectorGroup" Grid.Column="2" Header="Rows (0 Selected)">
+                            <DataGrid x:Name="RowSelectionGrid" AutoGenerateColumns="True" IsReadOnly="False" 
+                                      SelectionMode="Extended" Background="White" BorderBrush="#BDC3C7" Margin="5">
+                                </DataGrid>
+                        </GroupBox>
+                    </Grid>
+
+                    <Border Grid.Row="2" Background="#E8F8F5" BorderBrush="#1ABC9C" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,15,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Dependent Data Options:" FontWeight="Bold" Foreground="#16A085" Margin="0,0,0,10"/>
+                            <CheckBox x:Name="ImportSchedulesChk" Content="Import Schedules (Only imports schedules that match the Instructors/Rooms/Courses you selected above)" IsChecked="True" Margin="0,0,0,5"/>
+                            <CheckBox x:Name="ImportCurriculumsChk" Content="Import Curriculums (Only imports curriculums that match the Courses/Sections you selected above)" IsChecked="True"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                        <TextBlock Text="Step 3: Migrating Data" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,5"/>
+                        <TextBlock Text="Wiping current database and pumping selected old data..." Foreground="Gray" Margin="0,0,0,25"/>
+                    </StackPanel>
+
+                    <ProgressBar x:Name="MigrationProgress" Grid.Row="1" Height="40" Minimum="0" Maximum="100" Value="0" Margin="0,0,0,15" Foreground="#155D27" Background="#BDC3C7"/>
+                    <TextBlock x:Name="StatusText" Grid.Row="1" Text="Ready to begin." FontSize="13" FontWeight="Bold" Foreground="black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                    <GroupBox Grid.Row="2" Header="Migration Log">
+                        <ListBox x:Name="LogList" Background="#1E1E1E" Foreground="#00FF00" FontFamily="Consolas" BorderThickness="0" Padding="5"/>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <Border Grid.Row="1" BorderBrush="#BDC3C7" BorderThickness="0,1,0,0" Margin="0,15,0,0" Padding="0,15,0,0">
+            <Grid>
+                <Button x:Name="CancelBtn" Content="Cancel" Width="100" Height="35" HorizontalAlignment="Left" Background="#E74C3C" Foreground="White" BorderThickness="0" Click="CancelBtn_Click"/>
+                
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="BackBtn" Content="Back" Width="100" Height="35" Style="{StaticResource SecondaryButton}" Click="BackBtn_Click"/>
+                    <Button x:Name="NextBtn" Content="Next" Width="100" Height="35" Margin="10,0" Style="{StaticResource SecondaryButton}" Click="NextBtn_Click"/>
+                    <Button x:Name="FinishBtn" Content="Restart App" Width="120" Height="35" Style="{StaticResource PrimaryButton}" Visibility="Collapsed" Click="FinishBtn_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
 </Window>
