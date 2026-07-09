@@ -9,7 +9,6 @@ namespace UniversityScheduler.Views
 {
     public partial class InstructorsView : UserControl
     {
-        // Change list type to our new ViewModel
         private List<InstructorViewModel> _allInstructors = new List<InstructorViewModel>();
         private int _targetSemester;
 
@@ -24,11 +23,12 @@ namespace UniversityScheduler.Views
         {
             using (var db = new AppDbContext())
             {
+                // 1. UPDATED: Include both semester rooms!
                 var instructors = db.Instructors
-                            .Include(i => i.AssignedRoom) 
+                            .Include(i => i.AssignedRoomSem1) 
+                            .Include(i => i.AssignedRoomSem2) 
                             .ToList();
                 
-                // Fetch ALL schedules
                 var schedules = db.Schedules
                     .Include(s => s.Course)
                     .Where(s => s.InstructorId != null)
@@ -36,7 +36,6 @@ namespace UniversityScheduler.Views
 
                 _allInstructors = instructors.Select(inst => 
                 {
-                    // Calculate Semester Load
                     int currentLoad = schedules
                     .Where(s => s.InstructorId == inst.Id && 
                                 s.Course != null && 
@@ -45,12 +44,15 @@ namespace UniversityScheduler.Views
                     .Distinct()
                     .Sum(x => x.Units);
 
+                    // 2. UPDATED: Grab the correct max units dynamically
+                    int maxUnits = _targetSemester == 1 ? inst.MaxUnitsSem1 : inst.MaxUnitsSem2;
+
                     return new InstructorViewModel
                     {
                         Source = inst,
+                        Semester = _targetSemester, // Pass the semester to the ViewModel!
                         CurrentUnits = currentLoad,
-                        // Helpful format for secretaries
-                        UnitLoadDisplay = $"{currentLoad} / {inst.MaxUnits}" 
+                        UnitLoadDisplay = $"{currentLoad} / {maxUnits}" 
                     };
                 }).OrderBy(vm => vm.Source.Surname).ThenBy(vm => vm.Source.FirstName).ToList();
 
@@ -58,7 +60,6 @@ namespace UniversityScheduler.Views
             }
         }
 
-        // --- Search Logic Updated for ViewModel ---
         private void SearchTxt_TextChanged(object sender, TextChangedEventArgs e)
         {
             string query = SearchTxt.Text.ToLower();
@@ -69,16 +70,15 @@ namespace UniversityScheduler.Views
             }
             else
             {
+                // 3. UPDATED: Use the ViewModel's dynamically calculated Program property
                 var filtered = _allInstructors.Where(vm => 
                     vm.Source.FullName.ToLower().Contains(query) || 
-                    vm.Source.Program.ToLower().Contains(query)
+                    (vm.Program ?? "").ToLower().Contains(query)
                 ).ToList();
 
                 InstructorsGrid.ItemsSource = filtered;
             }
         }
-
-        // --- Event Handlers Updated for ViewModel Casting ---
 
         private void AddButton_Click(object sender, RoutedEventArgs e)
         {
@@ -91,7 +91,6 @@ namespace UniversityScheduler.Views
 
         private void EditButton_Click(object sender, RoutedEventArgs e)
         {
-            // CAST to InstructorViewModel, then access .Source
             if (InstructorsGrid.SelectedItem is InstructorViewModel selectedVM)
             {
                 var editWindow = new AddInstructorWindow(selectedVM.Source);
@@ -112,24 +111,21 @@ namespace UniversityScheduler.Views
             {
                 using (var db = new AppDbContext())
                 {
-                    // 1. SAFETY CHECK: Is this instructor assigned to any classes?
                     bool hasAssignments = db.Schedules.Any(s => s.InstructorId == selectedVM.Source.Id);
 
                     if (hasAssignments)
                     {
                         MessageBox.Show(
                             $"Cannot delete {selectedVM.Name} because they have assigned classes.\n\n" +
-                            "Please use the 'Unassign Selected' button first.", // Updated message
+                            "Please use the 'Unassign Selected' button first.", 
                             "Deletion Blocked",
                             MessageBoxButton.OK,
                             MessageBoxImage.Error);
-                        return; // Stop here. Do not attempt delete.
+                        return; 
                     }
 
-                    // 2. If safe, proceed with confirmation and delete
                     if (MessageBox.Show($"Delete {selectedVM.Name}?", "Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                     {
-                        // Re-attach the object to the new context to delete it
                         db.Instructors.Remove(selectedVM.Source);
                         db.SaveChanges();
                         LoadInstructors();
@@ -147,8 +143,6 @@ namespace UniversityScheduler.Views
         {
             using (var db = new AppDbContext())
             {
-                // 1. SAFETY CHECK: Are there ANY assigned courses?
-                // We check if any schedule has a non-null InstructorId
                 bool anyAssignments = db.Schedules.Any(s => s.InstructorId != null);
 
                 if (anyAssignments)
@@ -159,10 +153,9 @@ namespace UniversityScheduler.Views
                         "Reset Blocked",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
-                    return; // STOP execution here prevents the crash
+                    return; 
                 }
 
-                // 2. If safe, proceed
                 if (MessageBox.Show("Are you sure you want to delete ALL Instructors?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
                     db.Instructors.ExecuteDelete(); 
@@ -174,7 +167,6 @@ namespace UniversityScheduler.Views
     
         private void UnassignButton_Click(object sender, RoutedEventArgs e)
         {
-            // Get selected items (Support Multiple Selection)
             var selectedItems = InstructorsGrid.SelectedItems.Cast<InstructorViewModel>().ToList();
 
             if (selectedItems.Count == 0)
@@ -188,15 +180,12 @@ namespace UniversityScheduler.Views
             {
                 using (var db = new AppDbContext())
                 {
-                    // Get the IDs of the selected instructors
                     var instructorIds = selectedItems.Select(vm => vm.Source.Id).ToList();
 
-                    // Find all schedules assigned to these IDs
                     var schedulesToUpdate = db.Schedules
                         .Where(s => s.InstructorId != null && instructorIds.Contains(s.InstructorId.Value))
                         .ToList();
 
-                    // Unassign them (Set to NULL)
                     foreach (var schedule in schedulesToUpdate)
                     {
                         schedule.InstructorId = null;
@@ -206,47 +195,42 @@ namespace UniversityScheduler.Views
                 }
                 
                 MessageBox.Show("Courses unassigned successfully.");
-                LoadInstructors(); // Refresh the grid
+                LoadInstructors();
                 MainWindow.TriggerDatabaseUpdated();
             }
         }
-    
     }
 
     // --- Helper Class for Display ---
     public class InstructorViewModel
     {
         public required Instructor Source { get; set; }
+        
+        // 4. UPDATED: We added Semester so the ViewModel knows which data to show!
+        public int Semester { get; set; }
 
-        // Expose properties for DataGrid Binding
         public string Name => Source.FullName;
         public string Initials => Source.Initials;
-        public string Room => Source.AssignedRoom?.Name ?? "-";
-        public string Program => Source.Program;
-        public string Status => Source.Status;
+        
+        // 5. UPDATED: Dynamic properties based on the Semester
+        public string Room => (Semester == 1 ? Source.AssignedRoomSem1?.Name : Source.AssignedRoomSem2?.Name) ?? "-";
+        public string Program => (Semester == 1 ? Source.ProgramSem1 : Source.ProgramSem2) ?? "";
+        public string Status => (Semester == 1 ? Source.StatusSem1 : Source.StatusSem2) ?? "Unknown";
+        public int MaxUnits => Semester == 1 ? Source.MaxUnitsSem1 : Source.MaxUnitsSem2;
         
         public int CurrentUnits { get; set; }
-        public int MaxUnits => Source.MaxUnits;
-
-
-        // The new Calculated Property
         public string UnitLoadDisplay { get; set; } = "0 / 0";
         
-        // Calculate the specific Overload amount
         public string OverloadDisplay
         {
             get
             {
                 int diff = CurrentUnits - MaxUnits;
-                if (diff > 0)
-                {
-                    return $"+{diff}"; // e.g., "+3"
-                }
-                return "-"; // Empty or dash if not overloaded
+                if (diff > 0) return $"+{diff}"; 
+                return "-"; 
             }
         }
 
-        // Color coding logic (Optional: Makes text Red if overloaded)
         public string LoadColor 
         {
             get 
@@ -254,10 +238,10 @@ namespace UniversityScheduler.Views
                 try 
                 {
                     var parts = UnitLoadDisplay.Split('/');
-                    if (int.Parse(parts[0].Trim()) > int.Parse(parts[1].Trim())) return "#C0392B"; // Red
+                    if (int.Parse(parts[0].Trim()) > int.Parse(parts[1].Trim())) return "#C0392B"; 
                 } 
                 catch {}
-                return "#333333"; // Default Black/Gray
+                return "#333333"; 
             }
         }
     }

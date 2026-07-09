@@ -153,9 +153,12 @@ namespace UniversityScheduler.Views
                 {
                     // Logic: Match Program and Year Level preference
                     // Note: Handle flexible string matching
+                    string instProg = _targetSemester == 1 ? inst.ProgramSem1 : inst.ProgramSem2;
+                    string instYears = _targetSemester == 1 ? inst.PreferredYearLevelsSem1 : inst.PreferredYearLevelsSem2;
+                    
                     var validSections = allSections.Where(s => 
-                        (inst.Program.Contains(s.Program) || inst.Program.Contains("General Education")) && 
-                        inst.PreferredYearLevels.Contains(s.YearLevel.ToString())
+                        ((instProg ?? "").Contains(s.Program) || (instProg ?? "").Contains("General Education")) && 
+                        ((instYears ?? "").Contains(s.YearLevel.ToString()))
                     ).ToList();
 
                     SectionCombo.ItemsSource = validSections;
@@ -207,9 +210,10 @@ namespace UniversityScheduler.Views
             // If Section is selected, filter by Program
             if (SectionCombo.SelectedItem is StudentSection section)
             {
-                allInst = allInst.Where(i => 
-                    i.Program.Contains(section.Program) 
-                ).ToList();
+                allInst = allInst.Where(i => {
+                    string prog = _targetSemester == 1 ? i.ProgramSem1 : i.ProgramSem2;
+                    return (prog ?? "").Contains(section.Program);
+                }).ToList();
             }
 
             // Filter by Vacancy (Time)
@@ -285,10 +289,15 @@ namespace UniversityScheduler.Views
 
         private void InstructorCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (InstructorCombo.SelectedItem is Instructor selectedInstructor && !string.IsNullOrWhiteSpace(selectedInstructor.SchedulePreferences))
-                PreferenceTxt.Text = selectedInstructor.SchedulePreferences.Replace("|", " @ ").Replace(";", "\n");
-            else
-                PreferenceTxt.Text = "-";
+            if (InstructorCombo.SelectedItem is Instructor selectedInstructor)
+            {
+                string prefs = _targetSemester == 1 ? selectedInstructor.SchedulePreferencesSem1 : selectedInstructor.SchedulePreferencesSem2;
+                if (!string.IsNullOrWhiteSpace(prefs))
+                    PreferenceTxt.Text = prefs.Replace("|", " @ ").Replace(";", "\n");
+                else
+                    PreferenceTxt.Text = "-";
+            }
+            else PreferenceTxt.Text = "-";
         }
 
 

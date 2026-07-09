@@ -20,6 +20,7 @@ namespace UniversityScheduler.Views
         public string DisplayString { get; set; } = string.Empty;
         public string ValueString { get; set; } = string.Empty;
     }
+
     public class PreferredCourseItem
     {
         public string Code { get; set; } = string.Empty;
@@ -29,26 +30,171 @@ namespace UniversityScheduler.Views
 
     public partial class AddInstructorWindow : Window
     {
-        private ObservableCollection<TimeBlockItem> _timeBlocks = new ObservableCollection<TimeBlockItem>();
-        private ObservableCollection<PreferredCourseItem> _preferredCourses = new ObservableCollection<PreferredCourseItem>();
+        // Semester 1 Collections
+        private ObservableCollection<TimeBlockItem> _timeBlocksSem1 = new ObservableCollection<TimeBlockItem>();
+        private ObservableCollection<PreferredCourseItem> _preferredCoursesSem1 = new ObservableCollection<PreferredCourseItem>();
+        public ObservableCollection<SelectableProgram> AvailableProgramsSem1 { get; set; } = new ObservableCollection<SelectableProgram>();
+
+        // Semester 2 Collections
+        private ObservableCollection<TimeBlockItem> _timeBlocksSem2 = new ObservableCollection<TimeBlockItem>();
+        private ObservableCollection<PreferredCourseItem> _preferredCoursesSem2 = new ObservableCollection<PreferredCourseItem>();
+        public ObservableCollection<SelectableProgram> AvailableProgramsSem2 { get; set; } = new ObservableCollection<SelectableProgram>();
+
         private List<PreferredCourseItem> _allDatabaseCourses = new List<PreferredCourseItem>();
-        public ObservableCollection<SelectableProgram> AvailablePrograms { get; set; } = new ObservableCollection<SelectableProgram>();
-        private int _editingId = 0; 
+        private int _editingId = 0;
 
         public AddInstructorWindow()
         {
             InitializeComponent();
             InitializeLists();
-            LoadPrograms(null);
-            LoadRooms();    
+            LoadRooms();
+            LoadPrograms(AvailableProgramsSem1, null);
+            LoadPrograms(AvailableProgramsSem2, null);
         }
 
-        // Auto-Generate Initials
+        public AddInstructorWindow(Instructor instructorToEdit)
+        {
+            InitializeComponent();
+            InitializeLists();
+            LoadRooms();
+
+            _editingId = instructorToEdit.Id;
+            this.Title = "Edit Instructor (Global & Semesters)";
+
+            // 1. Load Global Data
+            TitleCombo.Text = instructorToEdit.Title;
+            SurnameTxt.Text = instructorToEdit.Surname;
+            FirstNameTxt.Text = instructorToEdit.FirstName;
+            MiddleNameTxt.Text = instructorToEdit.MiddleName;
+            SuffixTxt.Text = instructorToEdit.Suffix;
+            InitialsTxt.Text = instructorToEdit.Initials;
+
+            AddressTxt.Text = instructorToEdit.HomeAddress;
+            BaccTxt.Text = instructorToEdit.BaccalaureateDegree;
+            MasterTxt.Text = instructorToEdit.MastersDegree;
+            DoctorTxt.Text = instructorToEdit.DoctoralDegree;
+            ExpPublicTxt.Text = instructorToEdit.ExperiencePublic.ToString();
+            ExpPrivateTxt.Text = instructorToEdit.ExperiencePrivate.ToString();
+
+            // 2. Load Semester 1 Data
+            LoadSemesterData(1, instructorToEdit);
+            LoadPrograms(AvailableProgramsSem1, instructorToEdit.ProgramSem1);
+
+            // 3. Load Semester 2 Data
+            LoadSemesterData(2, instructorToEdit);
+            LoadPrograms(AvailableProgramsSem2, instructorToEdit.ProgramSem2);
+        }
+
+        private void InitializeLists()
+        {
+            PreferencesListSem1.ItemsSource = _timeBlocksSem1;
+            PreferredCoursesListSem1.ItemsSource = _preferredCoursesSem1;
+            ProgramCheckListSem1.ItemsSource = AvailableProgramsSem1;
+
+            PreferencesListSem2.ItemsSource = _timeBlocksSem2;
+            PreferredCoursesListSem2.ItemsSource = _preferredCoursesSem2;
+            ProgramCheckListSem2.ItemsSource = AvailableProgramsSem2;
+        }
+
+        private void LoadRooms()
+        {
+            using (var db = new AppDbContext())
+            {
+                var rooms = db.Rooms.OrderBy(r => r.Name).ToList();
+                AssignedRoomComboSem1.ItemsSource = rooms;
+                AssignedRoomComboSem2.ItemsSource = rooms;
+            }
+        }
+
+        private void LoadPrograms(ObservableCollection<SelectableProgram> targetList, string? existingPrograms)
+        {
+            targetList.Clear();
+            using (var db = new AppDbContext())
+            {
+                if (db.Database.CanConnect())
+                {
+                    var programs = db.Programs.Select(p => p.Code).OrderBy(p => p).ToList();
+                    foreach (var p in programs)
+                    {
+                        if (p != "General Education")
+                            targetList.Add(new SelectableProgram { Name = p, IsSelected = false });
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(existingPrograms))
+            {
+                var currentTags = existingPrograms.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries);
+                foreach (var item in targetList)
+                {
+                    if (currentTags.Contains(item.Name)) item.IsSelected = true;
+                }
+            }
+        }
+
+        private void LoadSemesterData(int semester, Instructor inst)
+        {
+            if (semester == 1)
+            {
+                UnitsTxtSem1.Text = inst.MaxUnitsSem1.ToString();
+                if (inst.AssignedRoomIdSem1 != null) AssignedRoomComboSem1.SelectedValue = inst.AssignedRoomIdSem1;
+                foreach (ComboBoxItem item in StatusComboSem1.Items) if (item.Content.ToString() == inst.StatusSem1) StatusComboSem1.SelectedItem = item;
+
+                if (!string.IsNullOrEmpty(inst.PreferredYearLevelsSem1))
+                {
+                    var years = inst.PreferredYearLevelsSem1.Split(',');
+                    CbYear1Sem1.IsChecked = years.Contains("1"); CbYear2Sem1.IsChecked = years.Contains("2");
+                    CbYear3Sem1.IsChecked = years.Contains("3"); CbYear4Sem1.IsChecked = years.Contains("4");
+                }
+                LoadTimeBlocks(inst.SchedulePreferencesSem1, _timeBlocksSem1);
+                LoadPreferredCourses(inst.PreferredCourseCodesSem1, _preferredCoursesSem1);
+            }
+            else
+            {
+                UnitsTxtSem2.Text = inst.MaxUnitsSem2.ToString();
+                if (inst.AssignedRoomIdSem2 != null) AssignedRoomComboSem2.SelectedValue = inst.AssignedRoomIdSem2;
+                foreach (ComboBoxItem item in StatusComboSem2.Items) if (item.Content.ToString() == inst.StatusSem2) StatusComboSem2.SelectedItem = item;
+
+                if (!string.IsNullOrEmpty(inst.PreferredYearLevelsSem2))
+                {
+                    var years = inst.PreferredYearLevelsSem2.Split(',');
+                    CbYear1Sem2.IsChecked = years.Contains("1"); CbYear2Sem2.IsChecked = years.Contains("2");
+                    CbYear3Sem2.IsChecked = years.Contains("3"); CbYear4Sem2.IsChecked = years.Contains("4");
+                }
+                LoadTimeBlocks(inst.SchedulePreferencesSem2, _timeBlocksSem2);
+                LoadPreferredCourses(inst.PreferredCourseCodesSem2, _preferredCoursesSem2);
+            }
+        }
+
+        private void LoadTimeBlocks(string dbString, ObservableCollection<TimeBlockItem> targetList)
+        {
+            if (string.IsNullOrEmpty(dbString)) return;
+            var blocks = dbString.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var block in blocks)
+            {
+                var parts = block.Split('|');
+                if (parts.Length == 2) targetList.Add(new TimeBlockItem { DisplayString = $"{parts[0]} : {parts[1]}", ValueString = block });
+            }
+        }
+
+        private void LoadPreferredCourses(string dbString, ObservableCollection<PreferredCourseItem> targetList)
+        {
+            if (string.IsNullOrEmpty(dbString)) return;
+            var codes = dbString.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            using (var db = new AppDbContext())
+            {
+                foreach (var code in codes)
+                {
+                    var c = db.Courses.FirstOrDefault(x => x.Code == code);
+                    if (c != null) targetList.Add(new PreferredCourseItem { Code = c.Code, DisplayString = c.Name });
+                }
+            }
+        }
+
         private void NameTxt_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_editingId == 0)
             {
-                // Safely grab the text from the new boxes (using ? in case they are initializing)
                 string first = FirstNameTxt?.Text?.Trim() ?? "";
                 string middle = MiddleNameTxt?.Text?.Trim() ?? "";
                 string last = SurnameTxt?.Text?.Trim() ?? "";
@@ -58,273 +204,121 @@ namespace UniversityScheduler.Views
                 
                 string initials = "";
                 foreach (var part in parts)
-                {
                     if (part.Length > 0 && char.IsLetter(part[0]))
                         initials += char.ToUpper(part[0]);
-                }
                 
                 if (InitialsTxt != null) InitialsTxt.Text = initials;
             }
         }
 
-        public AddInstructorWindow(Instructor instructorToEdit)
+        // --- DYNAMIC EVENT HANDLERS (They check which tab is open!) ---
+
+        private void SelectAllDays_Click(object sender, RoutedEventArgs e)
         {
-            InitializeComponent();
-            InitializeLists();
-            
-            _editingId = instructorToEdit.Id;
-            this.Title = "Edit Instructor";
-            
-            TitleCombo.Text = instructorToEdit.Title;
-            SurnameTxt.Text = instructorToEdit.Surname;
-            FirstNameTxt.Text = instructorToEdit.FirstName;
-            MiddleNameTxt.Text = instructorToEdit.MiddleName;
-            SuffixTxt.Text = instructorToEdit.Suffix;
-            InitialsTxt.Text = instructorToEdit.Initials;
-            UnitsTxt.Text = instructorToEdit.MaxUnits.ToString();
-            AddressTxt.Text = instructorToEdit.HomeAddress;
-            BaccTxt.Text = instructorToEdit.BaccalaureateDegree;
-            MasterTxt.Text = instructorToEdit.MastersDegree;
-            DoctorTxt.Text = instructorToEdit.DoctoralDegree;
-            ExpPublicTxt.Text = instructorToEdit.ExperiencePublic.ToString();
-            ExpPrivateTxt.Text = instructorToEdit.ExperiencePrivate.ToString();
-            
-            // 1. Set Assigned Room
-            if (instructorToEdit.AssignedRoomId != null)
-            {
-                AssignedRoomCombo.SelectedValue = instructorToEdit.AssignedRoomId;
-            }
-
-            // 2. Set Preferred Years (Parse "1,3" string)
-            if (!string.IsNullOrEmpty(instructorToEdit.PreferredYearLevels))
-            {
-                var years = instructorToEdit.PreferredYearLevels.Split(',');
-                CbYear1.IsChecked = years.Contains("1");
-                CbYear2.IsChecked = years.Contains("2");
-                CbYear3.IsChecked = years.Contains("3");
-                CbYear4.IsChecked = years.Contains("4");
-            }
-
-            foreach (ComboBoxItem item in StatusCombo.Items)
-                if (item.Content.ToString() == instructorToEdit.Status) 
-                    StatusCombo.SelectedItem = item;
-
-            LoadPrograms(instructorToEdit.Program);
-            LoadRooms();
-
-            if (instructorToEdit.AssignedRoomId != null)
-            {
-                AssignedRoomCombo.SelectedValue = instructorToEdit.AssignedRoomId;
-            }
-
-            if (!string.IsNullOrEmpty(instructorToEdit.PreferredYearLevels))
-            {
-                var years = instructorToEdit.PreferredYearLevels.Split(',');
-                CbYear1.IsChecked = years.Contains("1");
-                CbYear2.IsChecked = years.Contains("2");
-                CbYear3.IsChecked = years.Contains("3");
-                CbYear4.IsChecked = years.Contains("4");
-            }
-
-            if (!string.IsNullOrEmpty(instructorToEdit.SchedulePreferences))
-            {
-                var blocks = instructorToEdit.SchedulePreferences.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var block in blocks)
-                {
-                    var parts = block.Split('|');
-                    if (parts.Length == 2)
-                    {
-                        _timeBlocks.Add(new TimeBlockItem 
-                        { 
-                            DisplayString = $"{parts[0]} : {parts[1]}", 
-                            ValueString = block 
-                        });
-                    }
-                }
-            }
-
-            if (!string.IsNullOrEmpty(instructorToEdit.PreferredCourseCodes))
-            {
-                var codes = instructorToEdit.PreferredCourseCodes.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                using (var db = new AppDbContext())
-                {
-                    foreach (var code in codes)
-                    {
-                        var c = db.Courses.FirstOrDefault(x => x.Code == code);
-                        if (c != null)
-                            _preferredCourses.Add(new PreferredCourseItem { Code = c.Code, DisplayString = c.Name });
-                    }
-                }
-            }
-
+            var panel = SemesterTabs.SelectedIndex == 0 ? DayCheckboxesSem1 : DayCheckboxesSem2;
+            foreach (var child in panel.Children) if (child is CheckBox cb) cb.IsChecked = true;
         }
 
-        private void InitializeLists()
+        private void SelectNoDays_Click(object sender, RoutedEventArgs e)
         {
-            PreferencesList.ItemsSource = _timeBlocks;
-            ProgramCheckList.ItemsSource = AvailablePrograms;
-            PreferredCoursesList.ItemsSource = _preferredCourses;
-        }
-
-        private void LoadRooms()
-        {
-            using (var db = new AppDbContext())
-            {
-                // Get all rooms, sorted by Name
-                var rooms = db.Rooms.OrderBy(r => r.Name).ToList();
-                
-                // Add a "None" option (optional, or just allow null selection)
-                // For simplicity, we just bind the list. The user can leave it empty.
-                AssignedRoomCombo.ItemsSource = rooms;
-            }
-        }
-
-        private void LoadPrograms(string? existingPrograms)
-        {
-            AvailablePrograms.Clear();
-            using (var db = new AppDbContext())
-            {
-                if (db.Database.CanConnect())
-                {
-                    var programs = db.Programs
-                        .Select(p => p.Code)
-                        .OrderBy(p => p)
-                        .ToList();
-
-                    foreach (var p in programs)
-                    {
-                        if (p != "General Education")
-                            AvailablePrograms.Add(new SelectableProgram { Name = p, IsSelected = false });
-                    }
-                }
-            }
-
-            // Re-check the boxes if we are editing an existing item
-            if (!string.IsNullOrEmpty(existingPrograms))
-            {
-                var currentTags = existingPrograms.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries);
-                foreach (var item in AvailablePrograms)
-                {
-                    if (currentTags.Contains(item.Name)) item.IsSelected = true;
-                }
-            }
+            var panel = SemesterTabs.SelectedIndex == 0 ? DayCheckboxesSem1 : DayCheckboxesSem2;
+            foreach (var child in panel.Children) if (child is CheckBox cb) cb.IsChecked = false;
         }
 
         private void PreferredCourseCombo_DropDownOpened(object sender, EventArgs e)
         {
-            // 1. Figure out what programs and years the user has selected
-            var selectedProgs = AvailablePrograms.Where(p => p.IsSelected).Select(p => p.Name).ToList();
+            bool isSem1 = SemesterTabs.SelectedIndex == 0;
+            var targetProgs = isSem1 ? AvailableProgramsSem1 : AvailableProgramsSem2;
+            var selectedProgs = targetProgs.Where(p => p.IsSelected).Select(p => p.Name).ToList();
             
             List<int> selectedYears = new List<int>();
-            if (CbYear1.IsChecked == true) selectedYears.Add(1);
-            if (CbYear2.IsChecked == true) selectedYears.Add(2);
-            if (CbYear3.IsChecked == true) selectedYears.Add(3);
-            if (CbYear4.IsChecked == true) selectedYears.Add(4);
+            if (isSem1)
+            {
+                if (CbYear1Sem1.IsChecked == true) selectedYears.Add(1);
+                if (CbYear2Sem1.IsChecked == true) selectedYears.Add(2);
+                if (CbYear3Sem1.IsChecked == true) selectedYears.Add(3);
+                if (CbYear4Sem1.IsChecked == true) selectedYears.Add(4);
+            }
+            else
+            {
+                if (CbYear1Sem2.IsChecked == true) selectedYears.Add(1);
+                if (CbYear2Sem2.IsChecked == true) selectedYears.Add(2);
+                if (CbYear3Sem2.IsChecked == true) selectedYears.Add(3);
+                if (CbYear4Sem2.IsChecked == true) selectedYears.Add(4);
+            }
 
             using (var db = new AppDbContext())
             {
-                // Find all curriculums that match the selected programs AND selected years
                 var validCourses = db.Curriculums
                     .Include(c => c.Course)
-                    .Where(c => selectedProgs.Contains(c.Program) && selectedYears.Contains(c.YearLevel))
+                    .Where(c => selectedProgs.Contains(c.Program) && selectedYears.Contains(c.YearLevel) && c.Semester == (isSem1 ? 1 : 2))
                     .Select(c => c.Course)
                     .Distinct()
                     .Where(c => c != null)
                     .ToList();
 
-                // Convert to our UI item
-                _allDatabaseCourses = validCourses.Select(c => new PreferredCourseItem 
-                { 
-                    Code = c!.Code, 
-                    DisplayString = c.Name 
-                }).OrderBy(c => c.Code).ToList();
+                _allDatabaseCourses = validCourses.Select(c => new PreferredCourseItem { Code = c!.Code, DisplayString = c.Name }).OrderBy(c => c.Code).ToList();
 
-                PreferredCourseCombo.ItemsSource = _allDatabaseCourses;
+                if (isSem1) PreferredCourseComboSem1.ItemsSource = _allDatabaseCourses;
+                else PreferredCourseComboSem2.ItemsSource = _allDatabaseCourses;
             }
 
-            if (_allDatabaseCourses.Count == 0)
-            {
-                MessageBox.Show("No courses found. Please ensure you have selected at least one Program and one Year Level above.", "Filter Notice", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            if (_allDatabaseCourses.Count == 0) MessageBox.Show("No courses found for the selected Programs and Year Levels in this semester.", "Filter Notice", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void AddPreferredCourse_Click(object sender, RoutedEventArgs e)
         {
-            if (PreferredCourseCombo.SelectedItem is PreferredCourseItem selectedCourse)
-            {
-                if (_preferredCourses.Any(c => c.Code == selectedCourse.Code))
-                {
-                    MessageBox.Show("This course is already in the preferred list.");
-                    return;
-                }
+            bool isSem1 = SemesterTabs.SelectedIndex == 0;
+            var combo = isSem1 ? PreferredCourseComboSem1 : PreferredCourseComboSem2;
+            var targetList = isSem1 ? _preferredCoursesSem1 : _preferredCoursesSem2;
 
-                _preferredCourses.Add(selectedCourse);
-                PreferredCourseCombo.SelectedItem = null;
-                PreferredCourseCombo.Text = "";
-            }
-            else
+            if (combo.SelectedItem is PreferredCourseItem selectedCourse)
             {
-                MessageBox.Show("Please select a valid course from the dropdown.");
+                if (targetList.Any(c => c.Code == selectedCourse.Code)) { MessageBox.Show("Course already added."); return; }
+                targetList.Add(selectedCourse);
+                combo.SelectedItem = null;
+                combo.Text = "";
             }
+            else MessageBox.Show("Select a valid course first.");
         }
 
         private void RemovePreferredCourse_Click(object sender, RoutedEventArgs e)
         {
+            bool isSem1 = SemesterTabs.SelectedIndex == 0;
             if (sender is Button btn && btn.Tag is PreferredCourseItem item)
             {
-                _preferredCourses.Remove(item);
+                if (isSem1) _preferredCoursesSem1.Remove(item);
+                else _preferredCoursesSem2.Remove(item);
             }
         }
 
-        // --- NEW HELPER METHODS FOR SELECT ALL/NONE ---
-        private void SelectAllDays_Click(object sender, RoutedEventArgs e)
-        {
-            foreach (var child in DayCheckboxes.Children)
-                if (child is CheckBox cb) cb.IsChecked = true;
-        }
-
-        private void SelectNoDays_Click(object sender, RoutedEventArgs e)
-        {
-            foreach (var child in DayCheckboxes.Children)
-                if (child is CheckBox cb) cb.IsChecked = false;
-        }
-
-        // --- NEW ADD BLOCK LOGIC (USING COMBOBOXES) ---
         private void AddBlock_Click(object sender, RoutedEventArgs e)
         {
-            // 1. Build time strings from dropdowns
-            string startStr = $"{StartHourCombo.Text}:{StartMinCombo.Text} {StartAmPmCombo.Text}";
-            string endStr   = $"{EndHourCombo.Text}:{EndMinCombo.Text} {EndAmPmCombo.Text}";
+            bool isSem1 = SemesterTabs.SelectedIndex == 0;
+            
+            string startStr = isSem1 ? $"{StartHourComboSem1.Text}:{StartMinComboSem1.Text} {StartAmPmComboSem1.Text}" : $"{StartHourComboSem2.Text}:{StartMinComboSem2.Text} {StartAmPmComboSem2.Text}";
+            string endStr = isSem1 ? $"{EndHourComboSem2.Text}:{EndMinComboSem1.Text} {EndAmPmComboSem1.Text}" : $"{EndHourComboSem2.Text}:{EndMinComboSem2.Text} {EndAmPmComboSem2.Text}";
 
-            // 2. Parse
-            if (!DateTime.TryParse(startStr, out DateTime startDt) || 
-                !DateTime.TryParse(endStr, out DateTime endDt))
+            // Fallback bindings if XAML name mismatch occurs on EndHourComboSem2/1
+            if (isSem1 && EndHourComboSem1 != null) endStr = $"{EndHourComboSem1.Text}:{EndMinComboSem1.Text} {EndAmPmComboSem1.Text}";
+
+            if (!DateTime.TryParse(startStr, out DateTime startDt) || !DateTime.TryParse(endStr, out DateTime endDt))
             {
                 MessageBox.Show("Invalid Time Selection");
                 return;
             }
 
-            // 3. Auto-Correct: If End Time is before Start Time, assume +12 hours (e.g., 11AM to 1PM)
             if (endDt <= startDt)
             {
-                if (endDt.AddHours(12) > startDt)
-                    endDt = endDt.AddHours(12);
-                else
-                {
-                    MessageBox.Show("End time must be after Start time.");
-                    return;
-                }
+                if (endDt.AddHours(12) > startDt) endDt = endDt.AddHours(12);
+                else { MessageBox.Show("End time must be after Start time."); return; }
             }
 
-            // 4. Gather Days
+            var dayPanel = isSem1 ? DayCheckboxesSem1 : DayCheckboxesSem2;
             List<string> selectedDays = new List<string>();
-            foreach (var child in DayCheckboxes.Children)
+            foreach (var child in dayPanel.Children)
             {
-                if (child is CheckBox cb && cb.IsChecked == true)
-                {
-                    string day = cb.Content?.ToString() ?? "";
-                    if (!string.IsNullOrEmpty(day)) selectedDays.Add(day);
-                }
+                if (child is CheckBox cb && cb.IsChecked == true) selectedDays.Add(cb.Content?.ToString() ?? "");
             }
 
             if (selectedDays.Count == 0) { MessageBox.Show("Select at least one day."); return; }
@@ -333,121 +327,91 @@ namespace UniversityScheduler.Views
             string timeStr = $"{startDt.ToString("h:mm tt")} - {endDt.ToString("h:mm tt")}";
             string newValueString = $"{daysStr}|{timeStr}";
 
-            // 5. Prevent Duplicates
-            if (_timeBlocks.Any(b => b.ValueString == newValueString))
-            {
-                MessageBox.Show("This time block is already added.");
-                return;
-            }
+            var targetList = isSem1 ? _timeBlocksSem1 : _timeBlocksSem2;
+            if (targetList.Any(b => b.ValueString == newValueString)) { MessageBox.Show("Time block already added."); return; }
 
-            _timeBlocks.Add(new TimeBlockItem
-            {
-                DisplayString = $"{daysStr} : {timeStr}",
-                ValueString = newValueString
-            });
+            targetList.Add(new TimeBlockItem { DisplayString = $"{daysStr} : {timeStr}", ValueString = newValueString });
         }
 
         private void RemoveBlock_Click(object sender, RoutedEventArgs e)
         {
+            bool isSem1 = SemesterTabs.SelectedIndex == 0;
             if (sender is Button btn && btn.Tag is TimeBlockItem item)
             {
-                _timeBlocks.Remove(item);
+                if (isSem1) _timeBlocksSem1.Remove(item);
+                else _timeBlocksSem2.Remove(item);
             }
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(SurnameTxt.Text) || string.IsNullOrWhiteSpace(FirstNameTxt.Text)) 
-            { 
-                MessageBox.Show("Surname and First Name are required."); 
-                return; 
-            }
-            if (!int.TryParse(UnitsTxt.Text, out int units)) { MessageBox.Show("Invalid Units."); return; }
+            { MessageBox.Show("Surname and First Name are required."); return; }
 
-            var selectedProgs = AvailablePrograms.Where(p => p.IsSelected).Select(p => p.Name).ToList();
-            if (selectedProgs.Count == 0) { MessageBox.Show("Please check at least one program."); return; }
-            
-            // 1. Get Selected Room ID
-            int? roomId = null;
-            if (AssignedRoomCombo.SelectedValue != null)
-            {
-                roomId = (int)AssignedRoomCombo.SelectedValue;
-            }
+            // --- GATHER SEMESTER 1 DATA ---
+            var progs1 = AvailableProgramsSem1.Where(p => p.IsSelected).Select(p => p.Name).ToList();
+            List<string> yrs1 = new List<string>();
+            if (CbYear1Sem1.IsChecked == true) yrs1.Add("1"); if (CbYear2Sem1.IsChecked == true) yrs1.Add("2");
+            if (CbYear3Sem1.IsChecked == true) yrs1.Add("3"); if (CbYear4Sem1.IsChecked == true) yrs1.Add("4");
+            int units1 = int.TryParse(UnitsTxtSem1.Text, out int u1) ? u1 : 24;
 
-            // 2. Get Preferred Years String (e.g., "1,2,4")
-            List<string> selectedYears = new List<string>();
-            if (CbYear1.IsChecked == true) selectedYears.Add("1");
-            if (CbYear2.IsChecked == true) selectedYears.Add("2");
-            if (CbYear3.IsChecked == true) selectedYears.Add("3");
-            if (CbYear4.IsChecked == true) selectedYears.Add("4");
-            
-            string yearString = string.Join(",", selectedYears);
-
-            string finalProgramStr = string.Join(", ", selectedProgs);
-            string finalSchedule = string.Join(";", _timeBlocks.Select(b => b.ValueString));
-            string finalCoursePrefs = string.Join(",", _preferredCourses.Select(c => c.Code));
-
-            int expPub = int.TryParse(ExpPublicTxt.Text, out int ep) ? ep : 0;
-            int expPriv = int.TryParse(ExpPrivateTxt.Text, out int epr) ? epr : 0;
+            // --- GATHER SEMESTER 2 DATA ---
+            var progs2 = AvailableProgramsSem2.Where(p => p.IsSelected).Select(p => p.Name).ToList();
+            List<string> yrs2 = new List<string>();
+            if (CbYear1Sem2.IsChecked == true) yrs2.Add("1"); if (CbYear2Sem2.IsChecked == true) yrs2.Add("2");
+            if (CbYear3Sem2.IsChecked == true) yrs2.Add("3"); if (CbYear4Sem2.IsChecked == true) yrs2.Add("4");
+            int units2 = int.TryParse(UnitsTxtSem2.Text, out int u2) ? u2 : 24;
 
             using (var db = new AppDbContext())
             {
+                Instructor target;
                 if (_editingId == 0)
                 {
-                    var newInstructor = new Instructor
-                    {
-                        Title = TitleCombo.Text.Trim(),
-                        Surname = SurnameTxt.Text.Trim(),
-                        FirstName = FirstNameTxt.Text.Trim(),
-                        MiddleName = MiddleNameTxt.Text.Trim(),
-                        Suffix = SuffixTxt.Text.Trim(),
-                        Initials = InitialsTxt.Text,
-                        Status = (StatusCombo.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time",
-                        Program = finalProgramStr,
-                        MaxUnits = units,
-                        SchedulePreferences = finalSchedule,
-                        AssignedRoomId = roomId,
-                        PreferredYearLevels = yearString,
-                        PreferredCourseCodes = finalCoursePrefs,
-                        HomeAddress = AddressTxt.Text,
-                        BaccalaureateDegree = BaccTxt.Text,
-                        MastersDegree = MasterTxt.Text,
-                        DoctoralDegree = DoctorTxt.Text,
-                        ExperiencePublic = expPub,
-                        ExperiencePrivate = expPriv
-                    };
-                    db.Instructors.Add(newInstructor);
+                    target = new Instructor();
+                    db.Instructors.Add(target);
                 }
                 else
                 {
-                    var existing = db.Instructors.Find(_editingId);
-                    if (existing != null)
-                    {
-                        existing.Title = TitleCombo.Text.Trim();
-                        existing.Surname = SurnameTxt.Text.Trim();
-                        existing.FirstName = FirstNameTxt.Text.Trim();
-                        existing.MiddleName = MiddleNameTxt.Text.Trim();
-                        existing.Suffix = SuffixTxt.Text.Trim();
-                        existing.Initials = InitialsTxt.Text;
-                        existing.Status = (StatusCombo.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time";
-                        existing.Program = finalProgramStr;
-                        existing.MaxUnits = units;
-                        existing.SchedulePreferences = finalSchedule;
-                        existing.AssignedRoomId = roomId;
-                        existing.PreferredYearLevels = yearString;
-                        existing.PreferredCourseCodes = finalCoursePrefs;
-                        existing.HomeAddress = AddressTxt.Text;
-                        existing.BaccalaureateDegree = BaccTxt.Text;
-                        existing.MastersDegree = MasterTxt.Text;
-                        existing.DoctoralDegree = DoctorTxt.Text;
-                        existing.ExperiencePublic = expPub;
-                        existing.ExperiencePrivate = expPriv;
-                    }
+                    target = db.Instructors.Find(_editingId);
+                    if (target == null) return;
                 }
+
+                // Global
+                target.Title = TitleCombo.Text.Trim();
+                target.Surname = SurnameTxt.Text.Trim();
+                target.FirstName = FirstNameTxt.Text.Trim();
+                target.MiddleName = MiddleNameTxt.Text.Trim();
+                target.Suffix = SuffixTxt.Text.Trim();
+                target.Initials = InitialsTxt.Text;
+                target.HomeAddress = AddressTxt.Text;
+                target.BaccalaureateDegree = BaccTxt.Text;
+                target.MastersDegree = MasterTxt.Text;
+                target.DoctoralDegree = DoctorTxt.Text;
+                target.ExperiencePublic = int.TryParse(ExpPublicTxt.Text, out int ep) ? ep : 0;
+                target.ExperiencePrivate = int.TryParse(ExpPrivateTxt.Text, out int epr) ? epr : 0;
+
+                // Sem 1
+                target.StatusSem1 = (StatusComboSem1.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time";
+                target.MaxUnitsSem1 = units1;
+                target.ProgramSem1 = string.Join(", ", progs1);
+                target.SchedulePreferencesSem1 = string.Join(";", _timeBlocksSem1.Select(b => b.ValueString));
+                target.PreferredYearLevelsSem1 = string.Join(",", yrs1);
+                target.PreferredCourseCodesSem1 = string.Join(",", _preferredCoursesSem1.Select(c => c.Code));
+                target.AssignedRoomIdSem1 = AssignedRoomComboSem1.SelectedValue as int?;
+
+                // Sem 2
+                target.StatusSem2 = (StatusComboSem2.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time";
+                target.MaxUnitsSem2 = units2;
+                target.ProgramSem2 = string.Join(", ", progs2);
+                target.SchedulePreferencesSem2 = string.Join(";", _timeBlocksSem2.Select(b => b.ValueString));
+                target.PreferredYearLevelsSem2 = string.Join(",", yrs2);
+                target.PreferredCourseCodesSem2 = string.Join(",", _preferredCoursesSem2.Select(c => c.Code));
+                target.AssignedRoomIdSem2 = AssignedRoomComboSem2.SelectedValue as int?;
+
                 db.SaveChanges();
             }
             
-            MessageBox.Show("Instructor Saved!");
+            MessageBox.Show("Instructor Saved Successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             this.Close();
         }
     }

@@ -12,6 +12,7 @@ namespace UniversityScheduler.Data
         public string FirstName { get; set; } = string.Empty;
         public string MiddleName { get; set; } = string.Empty;
         public string Suffix { get; set; } = string.Empty;
+        public string Initials { get; set; } = string.Empty; 
         public string FullName 
         {
             get
@@ -22,33 +23,32 @@ namespace UniversityScheduler.Data
                 return $"{t}{FirstName}{m} {Surname}{s}".Trim();
             }
         }
-
-        public string Initials { get; set; } = string.Empty; // e.g. "SJ"
-        public string Program { get; set; } = string.Empty;
-        public string Status { get; set; } = "Active";
         public string HomeAddress { get; set; } = string.Empty;
         public string BaccalaureateDegree { get; set; } = string.Empty;
         public string MastersDegree { get; set; } = string.Empty;
         public string DoctoralDegree { get; set; } = string.Empty;
         public int ExperiencePublic { get; set; } = 0;
         public int ExperiencePrivate { get; set; } = 0;
-        public int MaxUnits { get; set; } = 24; // Default to 24
-        // This stores the days/times as a JSON string or comma-separated list
-        // e.g., "Monday,Wednesday|8:00-17:00"
-        public string SchedulePreferences { get; set; } = string.Empty;
-
         public bool IsScheduleLocked { get; set; } = false;
 
+        // ================= SEMESTER 1 DATA =================
+        public string StatusSem1 { get; set; } = "Full-time";
+        public int MaxUnitsSem1 { get; set; } = 24;
+        public string ProgramSem1 { get; set; } = string.Empty;
+        public string SchedulePreferencesSem1 { get; set; } = string.Empty;
+        public string PreferredYearLevelsSem1 { get; set; } = string.Empty;
+        public string PreferredCourseCodesSem1 { get; set; } = string.Empty;
+        public int? AssignedRoomIdSem1 { get; set; }
+        public Room? AssignedRoomSem1 { get; set; }
 
-        //Preferred Year Levels (Stored as "1,2" or "3,4")
-        public string PreferredYearLevels { get; set; } = string.Empty; 
-        //Preferred Course Codes (Stored as "CS101,IT102")
-        public string PreferredCourseCodes { get; set; } = string.Empty;
-
-        // NEW: Assigned "Home" Room
-        public int? AssignedRoomId { get; set; }
-
-        [ForeignKey("AssignedRoomId")]
-        public Room? AssignedRoom { get; set; }
+        // ================= SEMESTER 2 DATA =================
+        public string StatusSem2 { get; set; } = "Full-time";
+        public int MaxUnitsSem2 { get; set; } = 24;
+        public string ProgramSem2 { get; set; } = string.Empty;
+        public string SchedulePreferencesSem2 { get; set; } = string.Empty;
+        public string PreferredYearLevelsSem2 { get; set; } = string.Empty;
+        public string PreferredCourseCodesSem2 { get; set; } = string.Empty;
+        public int? AssignedRoomIdSem2 { get; set; }
+        public Room? AssignedRoomSem2 { get; set; }
     }
 }

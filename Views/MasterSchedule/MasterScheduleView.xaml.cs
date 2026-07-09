@@ -161,10 +161,10 @@ namespace UniversityScheduler.Views
 
                 // B. FILTER INSTRUCTORS
                 // FIX: Use (i.Program ?? "") to prevent CS8602 warnings safely
-                var filteredInstructors = allInstructors.Where(i => 
-                    selProg == "All" || 
-                    (i.Program ?? "").Contains(selProg)
-                ).ToList();
+                var filteredInstructors = allInstructors.Where(i => {
+                    string prog = (sem == 1 ? i.ProgramSem1 : i.ProgramSem2) ?? "";
+                    return selProg == "All" || prog.Contains(selProg);
+                }).ToList();
 
                 if (selClass != "All")
                 {
@@ -175,7 +175,7 @@ namespace UniversityScheduler.Views
                         string secProg = section.Program; 
                         filteredInstructors = filteredInstructors
                             .Where(i => {
-                                string prog = i.Program ?? ""; // Local safe variable
+                                string prog = (sem == 1 ? i.ProgramSem1 : i.ProgramSem2) ?? "";
                                 return prog.Contains(secProg) || prog.Contains("General Education");
                             })
                             .ToList();

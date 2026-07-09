@@ -79,8 +79,16 @@ namespace UniversityScheduler.Views
                foreach (var c in courses) c.RecommendedPrograms = c.RecommendedPrograms.Replace(oldCode, newCode);
 
                // 2. Update Instructors (Comma-separated string)
-               var instructors = db.Instructors.Where(i => i.Program.Contains(oldCode)).ToList();
-               foreach (var i in instructors) i.Program = i.Program.Replace(oldCode, newCode);
+               var instructors = db.Instructors.Where(i => 
+                  (i.ProgramSem1 != null && i.ProgramSem1.Contains(oldCode)) || 
+                  (i.ProgramSem2 != null && i.ProgramSem2.Contains(oldCode))
+               ).ToList();
+               
+               foreach (var i in instructors) 
+               {
+                   if (i.ProgramSem1 != null) i.ProgramSem1 = i.ProgramSem1.Replace(oldCode, newCode);
+                   if (i.ProgramSem2 != null) i.ProgramSem2 = i.ProgramSem2.Replace(oldCode, newCode);
+               }
 
                // 3. Update Sections (Direct string)
                var sections = db.Sections.Where(s => s.Program == oldCode).ToList();

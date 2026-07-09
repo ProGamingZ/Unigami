@@ -2,31 +2,22 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.EntityFrameworkCore;
 using UniversityScheduler.Data;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace UniversityScheduler
 {
    public partial class MainWindow : Window
    {
-      public System.Collections.ObjectModel.ObservableCollection<AlertItem> TbaAlerts { get; set; } 
-      = [];
-
-      public System.Collections.ObjectModel.ObservableCollection<AlertItem> IncompleteAlerts { get; set; } 
-      = [];
-
-      public System.Collections.ObjectModel.ObservableCollection<AlertItem> CrowdedAlerts { get; set; } 
-         = [];
-
-      public System.Collections.ObjectModel.ObservableCollection<AlertItem> OverloadAlerts { get; set; } 
-         = [];
-
-      public System.Collections.ObjectModel.ObservableCollection<AlertItem> UnderloadAlerts { get; set; } 
-         = [];
-
-      public System.Collections.ObjectModel.ObservableCollection<AlertItem> ContinuousAlerts { get; set; } 
-         = [];
-
-      public System.Collections.ObjectModel.ObservableCollection<AlertItem> GapAlerts { get; set; } 
-         = [];
+      public System.Collections.ObjectModel.ObservableCollection<AlertItem> TbaAlerts { get; set; } = [];
+      public System.Collections.ObjectModel.ObservableCollection<AlertItem> IncompleteAlerts { get; set; } = [];
+      public System.Collections.ObjectModel.ObservableCollection<AlertItem> CrowdedAlerts { get; set; } = [];
+      public System.Collections.ObjectModel.ObservableCollection<AlertItem> OverloadAlerts { get; set; } = [];
+      public System.Collections.ObjectModel.ObservableCollection<AlertItem> UnderloadAlerts { get; set; } = [];
+      public System.Collections.ObjectModel.ObservableCollection<AlertItem> ContinuousAlerts { get; set; } = [];
+      public System.Collections.ObjectModel.ObservableCollection<AlertItem> GapAlerts { get; set; } = [];
 
       private async Task RefreshSystemHealthAsync()
       {
@@ -44,7 +35,6 @@ namespace UniversityScheduler
 
             int unassignedCount = 0;
 
-            // Fetch ALL schedules once to use for everything
             var allSchedules = db.Schedules
                               .Include(s => s.Course)
                               .Include(s => s.Section)
@@ -53,7 +43,6 @@ namespace UniversityScheduler
                               .ToList();
 
             // --- A. UNASSIGNED (TBA) ---
-            // We can filter the in-memory list 'allSchedules' instead of querying DB again
             var tbaGroups = allSchedules
                .Where(s => s.InstructorId == null)
                .GroupBy(s => s.SectionId);
@@ -76,7 +65,6 @@ namespace UniversityScheduler
             }
 
             // ---  INCOMPLETE (Missing Units) --- 
-            // Fetch Sections and Curriculum for this semester
             var allSections = db.Sections.ToList();
             var allCurriculums = db.Curriculums
                               .Include(c => c.Course)
@@ -85,26 +73,23 @@ namespace UniversityScheduler
 
             foreach (var section in allSections)
             {
-               // 1. Calculate Max Units (Curriculum)
                int maxUnits = allCurriculums
                   .Where(c => c.Program == section.Program && c.YearLevel == section.YearLevel && c.Course != null)
                   .Sum(c => c.Course!.Units);
 
-               if (maxUnits == 0) continue; // Skip if no curriculum
+               if (maxUnits == 0) continue;
 
-               // 2. Calculate Assigned Units
                int assignedUnits = allSchedules
                   .Where(s => s.SectionId == section.Id && s.Course != null)
                   .Select(s => s.CourseId)
                   .Distinct()
                   .Sum(id => allSchedules.First(s => s.CourseId == id).Course!.Units);
 
-               // 3. Compare
                if (assignedUnits < maxUnits)
                {
                   incomplete.Add(new AlertItem
                   {
-                  Icon = "⚠️", // Warning Icon
+                  Icon = "⚠️",
                   Title = section.FullDisplayName,
                   Description = $"Missing: {maxUnits - assignedUnits} Units",
                   RelatedId = section.Id,
@@ -132,8 +117,6 @@ namespace UniversityScheduler
 
             // --- D. INSTRUCTORS (Overload/Underload/Straight/Gaps) ---
             var instructors = db.Instructors.ToList();
-
-            // We use the same 'allSchedules' list, just filter for instructors
             var instructorScheds = allSchedules.Where(s => s.InstructorId != null).ToList();
 
             foreach (var inst in instructors)
@@ -141,20 +124,19 @@ namespace UniversityScheduler
                var myScheds = instructorScheds.Where(s => s.InstructorId == inst.Id).ToList();
                if (myScheds.Count == 0) continue;
 
-               // Calculate Units
                int currentUnits = myScheds.Where(s => s.Course != null)
                   .Select(s => new { s.CourseId, s.SectionId, s.Course!.Units })
                   .Distinct().Sum(x => x.Units);
 
-               // Overload Alert
-               if (currentUnits > inst.MaxUnits)
-                  overload.Add(new AlertItem { Icon = "", Title = inst.FullName, Description = $" {currentUnits}/{inst.MaxUnits} Units", RelatedId = inst.Id, Type = "Instructor" });
+               // DYNAMIC SEMESTER CHECK
+               int maxInstUnits = _currentSemester == 1 ? inst.MaxUnitsSem1 : inst.MaxUnitsSem2;
 
-               // Underload Alert
-               if (currentUnits > 0 && currentUnits < (inst.MaxUnits * 0.75))
-                  underload.Add(new AlertItem { Icon = "", Title = inst.FullName, Description = $"{currentUnits}/{inst.MaxUnits} Units", RelatedId = inst.Id, Type = "Instructor" });
+               if (currentUnits > maxInstUnits)
+                  overload.Add(new AlertItem { Icon = "", Title = inst.FullName, Description = $" {currentUnits}/{maxInstUnits} Units", RelatedId = inst.Id, Type = "Instructor" });
 
-               // Time Analysis (Straight/Gaps)
+               if (currentUnits > 0 && currentUnits < (maxInstUnits * 0.75))
+                  underload.Add(new AlertItem { Icon = "", Title = inst.FullName, Description = $"{currentUnits}/{maxInstUnits} Units", RelatedId = inst.Id, Type = "Instructor" });
+
                var dayGroups = myScheds.GroupBy(s => s.Day);
                foreach (var dayGroup in dayGroups)
                {
@@ -164,65 +146,57 @@ namespace UniversityScheduler
 
                   foreach (var s in sorted)
                   {
-                  DateTime start = DateTime.Parse(s.StartTime);
-                  DateTime end = DateTime.Parse(s.EndTime);
-                  double duration = (end - start).TotalHours;
+                     DateTime start = DateTime.Parse(s.StartTime);
+                     DateTime end = DateTime.Parse(s.EndTime);
+                     double duration = (end - start).TotalHours;
 
-                  if (lastEndTime != null)
-                  {
-                        double gapHours = (start - lastEndTime.Value).TotalHours;
+                     if (lastEndTime != null)
+                     {
+                           double gapHours = (start - lastEndTime.Value).TotalHours;
 
-                        // GAP CHECK (> 3 Hours)
-                        if (gapHours > 3)
-                        {
-                           gaps.Add(new AlertItem
+                           if (gapHours > 3)
                            {
-                              Icon = "",
-                              Title = inst.FullName,
-                              Description = $"{s.Day}: {gapHours:0.#}hr Gap",
-                              RelatedId = inst.Id,
-                              Type = "Instructor"
-                           });
-                        }
+                              gaps.Add(new AlertItem
+                              {
+                                 Icon = "",
+                                 Title = inst.FullName,
+                                 Description = $"{s.Day}: {gapHours:0.#}hr Gap",
+                                 RelatedId = inst.Id,
+                                 Type = "Instructor"
+                              });
+                           }
 
-                        // STREAK CHECK (Gap < 20 mins counts as continuous)
-                        if (gapHours < 0.33) currentStreakHours += duration;
-                        else currentStreakHours = duration;
-                  }
-                  else
-                  {
-                        currentStreakHours = duration;
-                  }
+                           if (gapHours < 0.33) currentStreakHours += duration;
+                           else currentStreakHours = duration;
+                     }
+                     else
+                     {
+                           currentStreakHours = duration;
+                     }
 
-                  // STRAIGHT TEACHING ALERT (> 3 Hours)
-                  if (currentStreakHours >= 3)
-                  {
-                        string uniqueKey = $"{inst.FullName}-{s.Day}";
-                        if (!continuous.Any(x => x.Title == inst.FullName && x.Description.StartsWith(s.Day)))
-                        {
-                           continuous.Add(new AlertItem
+                     if (currentStreakHours >= 3)
+                     {
+                           if (!continuous.Any(x => x.Title == inst.FullName && x.Description.StartsWith(s.Day)))
                            {
-                              Icon = "",
-                              Title = inst.FullName,
-                              Description = $"{s.Day}: {currentStreakHours:0.#}hrs Straight",
-                              RelatedId = inst.Id,
-                              Type = "Instructor"
-                           });
-                        }
-                  }
-                  lastEndTime = end;
+                              continuous.Add(new AlertItem
+                              {
+                                 Icon = "",
+                                 Title = inst.FullName,
+                                 Description = $"{s.Day}: {currentStreakHours:0.#}hrs Straight",
+                                 RelatedId = inst.Id,
+                                 Type = "Instructor"
+                              });
+                           }
+                     }
+                     lastEndTime = end;
                   }
                }
             }
-
-            // Return everything, INCLUDING the new 'incomplete' list
             return (tba, incomplete, crowded, overload, underload, continuous, gaps, unassignedCount);
          });
 
          // 2. Update UI
          TbaAlerts.Clear(); foreach (var i in result.tba) TbaAlerts.Add(i);
-
-         // NEW: Update Incomplete UI
          IncompleteAlerts.Clear(); foreach (var i in result.incomplete) IncompleteAlerts.Add(i);
          if (TabIncomplete != null) TabIncomplete.Header = $"{IncompleteAlerts.Count} Incomplete";
 
@@ -232,7 +206,6 @@ namespace UniversityScheduler
          ContinuousAlerts.Clear(); foreach (var i in result.continuous) ContinuousAlerts.Add(i);
          GapAlerts.Clear();        foreach (var i in result.gaps)       GapAlerts.Add(i);
 
-         // Update Tab Headers
          if (TabMissing != null) TabMissing.Header = $"{result.unassignedCount} Unassigned";
          if (TabCrowded != null) TabCrowded.Header = $"{CrowdedAlerts.Count} Crowded";
          if (TabOverload != null) TabOverload.Header = $"{OverloadAlerts.Count} Overload";
@@ -240,11 +213,11 @@ namespace UniversityScheduler
          if (TabContinuous != null) TabContinuous.Header = $"{ContinuousAlerts.Count} Straight";
          if (TabGaps != null)       TabGaps.Header = $"{GapAlerts.Count} Gaps";
       }        
+
       private void JumpToAlert_Click(object sender, RoutedEventArgs e)
       {
          if (sender is Button btn && btn.Tag is AlertItem alert)
          {
-            // Reuse your existing jump logic from MainWindow.xaml.cs
             switch (alert.Type)
             {
                case "Section":
@@ -259,6 +232,5 @@ namespace UniversityScheduler
             }
          }
       }
-
    }
 }

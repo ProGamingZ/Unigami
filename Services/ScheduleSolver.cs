@@ -27,7 +27,7 @@ namespace UniversityScheduler.Services
 
                 // STEP 2: Prepare Constraints (Pre-calculation)
                 // We calculate these ONCE before entering the heavy loops
-                var roomRestrictions = BuildRoomRestrictions(instructors);
+                var roomRestrictions = BuildRoomRestrictions(instructors, semester);
                 var blockedSlots = GetLockedSlots(semester, settings);
 
                 // STEP 3: Build the Mathematical Model (Variables)
@@ -45,20 +45,26 @@ namespace UniversityScheduler.Services
                 return RunSolver(model, modelData.Assignments, semester, settings, log);
             }
             
-            private Dictionary<int, List<(string Program, int Year)>> BuildRoomRestrictions(List<Instructor> instructors)
+            private Dictionary<int, List<(string Program, int Year)>> BuildRoomRestrictions(List<Instructor> instructors, int semester)
             {
                 var restrictions = new Dictionary<int, List<(string, int)>>();
 
                 foreach (var instr in instructors)
                 {
-                    if (!string.Equals(instr.Status, "Full-Time", StringComparison.OrdinalIgnoreCase) || instr.AssignedRoomId == null) 
+                    string status = semester == 1 ? instr.StatusSem1 : instr.StatusSem2;
+                    int? assignedRoomId = semester == 1 ? instr.AssignedRoomIdSem1 : instr.AssignedRoomIdSem2;
+
+                    if (!string.Equals(status, "Full-Time", StringComparison.OrdinalIgnoreCase) || assignedRoomId == null) 
                         continue;
 
-                    int roomId = instr.AssignedRoomId.Value;
+                    int roomId = assignedRoomId.Value;
                     if (!restrictions.ContainsKey(roomId)) restrictions[roomId] = new List<(string, int)>();
 
-                    var progParts = instr.Program.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    var yearParts = instr.PreferredYearLevels.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    string program = semester == 1 ? instr.ProgramSem1 : instr.ProgramSem2;
+                    string yearLevels = semester == 1 ? instr.PreferredYearLevelsSem1 : instr.PreferredYearLevelsSem2;
+
+                    var progParts = (program ?? "").Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    var yearParts = (yearLevels ?? "").Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
                     foreach (var p in progParts)
                     {
@@ -333,7 +339,8 @@ namespace UniversityScheduler.Services
                 var data = CreateInstructorVariables(model, courseGroupsList, instructors, log);
 
                 // STEP 3: Apply Constraints
-                AddMaxLoadConstraints(model, data, instructors, lockedLoads);
+                int semester = schedules.FirstOrDefault()?.Semester ?? 1;
+                AddMaxLoadConstraints(model, data, instructors, lockedLoads, semester);
                 
                 // Note: We pass the MAP here for fast lookup inside the nested loops
                 AddInstructorConflictConstraints(model, data, courseGroupsMap, instructors);
@@ -440,27 +447,30 @@ namespace UniversityScheduler.Services
             private int CalculatePreferenceScore(Instructor instr, ClassSchedule sched)
             {
                 int score = 10; // Base
-                
+                string prefYears = sched.Semester == 1 ? instr.PreferredYearLevelsSem1 : instr.PreferredYearLevelsSem2;
+                string prefCourses = sched.Semester == 1 ? instr.PreferredCourseCodesSem1 : instr.PreferredCourseCodesSem2;
+                int? assignedRoom = sched.Semester == 1 ? instr.AssignedRoomIdSem1 : instr.AssignedRoomIdSem2;
+
                 // Bonus: Preferred Year Level
-                if (!string.IsNullOrEmpty(instr.PreferredYearLevels))
+                if (!string.IsNullOrEmpty(prefYears))
                 {
-                    var years = instr.PreferredYearLevels.Split(',');
+                    var years = prefYears.Split(',');
                     if (sched.Section != null && years.Contains(sched.Section.YearLevel.ToString())) score += 5;
                 }
 
                 // Bonus: Preferred Specific Course (+30 priority points)
-                if (!string.IsNullOrEmpty(instr.PreferredCourseCodes) && sched.Course != null)
+                if (!string.IsNullOrEmpty(prefCourses) && sched.Course != null)
                 {
-                    var preferredCourses = instr.PreferredCourseCodes.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    var preferredCourses = prefCourses.Split(',', StringSplitOptions.RemoveEmptyEntries);
                     if (preferredCourses.Contains(sched.Course.Code)) score += 30;
                 }
 
                 // Bonus: Owns the Room
-                if (sched.RoomId != null && instr.AssignedRoomId == sched.RoomId) score += 50;
+                if (sched.RoomId != null && assignedRoom == sched.RoomId) score += 50;
 
                 return score;
             }
-            private void AddMaxLoadConstraints(CpModel model, InstructorModelData data, List<Instructor> instructors, Dictionary<int, int> lockedLoads)
+            private void AddMaxLoadConstraints(CpModel model, InstructorModelData data, List<Instructor> instructors, Dictionary<int, int> lockedLoads, int semester)
             {
                 foreach (var instr in instructors)
                 {
@@ -469,7 +479,8 @@ namespace UniversityScheduler.Services
                         var loadVars = data.InstructorLoads[instr.Id].Select(x => x.Var * x.Units).ToList();
                         
                         int used = lockedLoads.ContainsKey(instr.Id) ? lockedLoads[instr.Id] : 0;
-                        int remaining = Math.Max(0, instr.MaxUnits - used);
+                        int maxUnits = semester == 1 ? instr.MaxUnitsSem1 : instr.MaxUnitsSem2;
+                        int remaining = Math.Max(0, maxUnits - used);
 
                         model.Add(LinearExpr.Sum(loadVars) <= remaining);
                     }
@@ -569,9 +580,10 @@ namespace UniversityScheduler.Services
             private bool IsInstructorQualified(Instructor instr, ClassSchedule schedule)
             {
                 // Note: You can pass settings.UniversalSubjects here if needed
-                if (string.IsNullOrEmpty(instr.Program) || schedule.Section == null) return false;
+                string program = schedule.Semester == 1 ? instr.ProgramSem1 : instr.ProgramSem2;
+                if (string.IsNullOrEmpty(program) || schedule.Section == null) return false;
 
-                var instructorPrograms = instr.Program.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var instructorPrograms = program.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 return instructorPrograms.Contains(schedule.Section.Program);
             }
 
@@ -617,10 +629,12 @@ namespace UniversityScheduler.Services
             if (!TimeSpan.TryParse(cls.StartTime, out var classStart) || 
                 !TimeSpan.TryParse(cls.EndTime, out var classEnd)) return false;
 
-            // 1. Handle "Any" or Empty (Assuming explicit availability if empty, optional)
-            if (string.IsNullOrWhiteSpace(instr.SchedulePreferences)) return true;
+            string prefs = cls.Semester == 1 ? instr.SchedulePreferencesSem1 : instr.SchedulePreferencesSem2;
 
-            var blocks = instr.SchedulePreferences.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            // 1. Handle "Any" or Empty (Assuming explicit availability if empty, optional)
+            if (string.IsNullOrWhiteSpace(prefs)) return true;
+
+            var blocks = prefs.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var block in blocks)
             {

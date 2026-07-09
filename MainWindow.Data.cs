@@ -30,7 +30,10 @@ namespace UniversityScheduler
             else
             {
                var filtered = _allInstructors
-                  .Where(i => (i.Program ?? "").Contains(programFilter) || (i.Program ?? "").Contains("General Education"))
+                  .Where(i => {
+                      string prog = _currentSemester == 1 ? i.ProgramSem1 : i.ProgramSem2;
+                      return (prog ?? "").Contains(programFilter) || (prog ?? "").Contains("General Education");
+                  })
                   .ToList();
                InstructorSelector.ItemsSource = filtered;
             }
