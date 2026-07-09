@@ -212,7 +212,7 @@ namespace UniversityScheduler.Views
 
 
                 UpdateCombo(ClassSelector, sortedSections.Select(s => new { Id = s.Id.ToString(), Name = $"{s.Program} {s.YearLevel}{s.Name}" }), selClass, "All Classes");                
-                UpdateCombo(InstructorSelector, filteredInstructors.Select(i => new { Id = i.Id.ToString(), Name = i.Name }), selInstr, "All Instructors");
+                UpdateCombo(InstructorSelector, filteredInstructors.Select(i => new { Id = i.Id.ToString(), Name = i.FullName }), selInstr, "All Instructors");
                 UpdateCombo(CourseSelector, finalCourses.Select(c => new { Id = c.Id.ToString(), Name = $"{c.Code}" }), selCourse, "All Courses");
 
                 _isUpdatingFilters = false;
@@ -437,7 +437,7 @@ namespace UniversityScheduler.Views
 
                                 card.Child = stack;
                                 // Tooltip for full details
-                                card.ToolTip = $"{courseCode}\n{start:h\\:mm} - {end:h\\:mm}\n{cls.Section?.Program}-{cls.Section?.YearLevel}{cls.Section?.Name}\nFull Instructor: {(cls.Instructor?.Name ?? "TBA")}";
+                                card.ToolTip = $"{courseCode}\n{start:h\\:mm} - {end:h\\:mm}\n{cls.Section?.Program}-{cls.Section?.YearLevel}{cls.Section?.Name}\nFull Instructor: {(cls.Instructor?.FullName ?? "TBA")}";
 
                                 Grid.SetColumn(card, roomIndex);
                                 Grid.SetRow(card, startRow);
@@ -600,36 +600,27 @@ namespace UniversityScheduler.Views
             private Dictionary<int, string> GetSmartInstructorNames(List<Instructor> instructors)
             {
                 var result = new Dictionary<int, string>();
-                var parsedList = new List<(int Id, string FullName, string LastName, string FirstInitial)>();
+                var parsedList = new List<(int Id, string LastName, string FirstInitial)>();
 
                 foreach (var instr in instructors)
                 {
-                    // Strip titles to find real name
-                    string cleanName = instr.Name
-                        .Replace("Dr.", "").Replace("Mr.", "").Replace("Ms.", "").Replace("Mrs.", "")
-                        .Replace("Prof.", "").Replace("Engr.", "").Trim();
+                    string lastName = string.IsNullOrWhiteSpace(instr.Surname) ? instr.FullName : instr.Surname;
+                    string initial = !string.IsNullOrWhiteSpace(instr.FirstName) ? instr.FirstName.Substring(0, 1) : "";
 
-                    var parts = cleanName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    string lastName = parts.Length > 0 ? parts.Last() : cleanName;
-                    string initial = parts.Length > 0 ? parts[0].Substring(0, 1) : "";
-
-                    parsedList.Add((instr.Id, instr.Name, lastName, initial));
+                    parsedList.Add((instr.Id, lastName, initial));
                 }
 
-                // Group by Last Name to find duplicates
                 var groups = parsedList.GroupBy(p => p.LastName);
 
                 foreach (var group in groups)
                 {
                     if (group.Count() == 1)
                     {
-                        // Unique Last Name -> Show ONLY Last Name
                         var item = group.First();
                         result[item.Id] = item.LastName;
                     }
                     else
                     {
-                        // Duplicate Last Name -> Show "Initial. Last Name"
                         foreach (var item in group)
                         {
                             result[item.Id] = $"{item.FirstInitial}. {item.LastName}";

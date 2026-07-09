@@ -7,10 +7,31 @@ namespace UniversityScheduler.Data
     {
         [Key]
         public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Surname { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string MiddleName { get; set; } = string.Empty;
+        public string Suffix { get; set; } = string.Empty;
+        public string FullName 
+        {
+            get
+            {
+                string t = string.IsNullOrWhiteSpace(Title) ? "" : $"{Title} ";
+                string m = string.IsNullOrWhiteSpace(MiddleName) ? "" : $" {MiddleName}";
+                string s = string.IsNullOrWhiteSpace(Suffix) ? "" : $" {Suffix}";
+                return $"{t}{FirstName}{m} {Surname}{s}".Trim();
+            }
+        }
+
         public string Initials { get; set; } = string.Empty; // e.g. "SJ"
         public string Program { get; set; } = string.Empty;
-        public string Status { get; set; } = "Active"; // Active, OnLeave, etc.
+        public string Status { get; set; } = "Active";
+        public string HomeAddress { get; set; } = string.Empty;
+        public string BaccalaureateDegree { get; set; } = string.Empty;
+        public string MastersDegree { get; set; } = string.Empty;
+        public string DoctoralDegree { get; set; } = string.Empty;
+        public int ExperiencePublic { get; set; } = 0;
+        public int ExperiencePrivate { get; set; } = 0;
         public int MaxUnits { get; set; } = 24; // Default to 24
         // This stores the days/times as a JSON string or comma-separated list
         // e.g., "Monday,Wednesday|8:00-17:00"

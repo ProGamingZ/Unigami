@@ -161,7 +161,7 @@ namespace UniversityScheduler
 
                VacantInstructors.Add(new VacancyItem
                {
-                  Header = inst.Name,
+                  Header = inst.FullName,
                   SubHeader = $"{inst.Program ?? "GenEd"}   {units}/{inst.MaxUnits}",
                   InstructorId = inst.Id
                });

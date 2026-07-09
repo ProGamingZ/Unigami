@@ -52,7 +52,7 @@ namespace UniversityScheduler.Views
                         // Helpful format for secretaries
                         UnitLoadDisplay = $"{currentLoad} / {inst.MaxUnits}" 
                     };
-                }).OrderBy(vm => vm.Source.Name).ToList();
+                }).OrderBy(vm => vm.Source.Surname).ThenBy(vm => vm.Source.FirstName).ToList();
 
                 InstructorsGrid.ItemsSource = _allInstructors;
             }
@@ -70,9 +70,8 @@ namespace UniversityScheduler.Views
             else
             {
                 var filtered = _allInstructors.Where(vm => 
-                    vm.Name.ToLower().Contains(query) || 
-                    vm.Initials.ToLower().Contains(query) ||
-                    vm.Program.ToLower().Contains(query)
+                    vm.Source.FullName.ToLower().Contains(query) || 
+                    vm.Source.Program.ToLower().Contains(query)
                 ).ToList();
 
                 InstructorsGrid.ItemsSource = filtered;
@@ -220,7 +219,7 @@ namespace UniversityScheduler.Views
         public required Instructor Source { get; set; }
 
         // Expose properties for DataGrid Binding
-        public string Name => Source.Name;
+        public string Name => Source.FullName;
         public string Initials => Source.Initials;
         public string Room => Source.AssignedRoom?.Name ?? "-";
         public string Program => Source.Program;

@@ -496,10 +496,18 @@
                                             Click="ClearScheduleBtn_Click"/>
 
                                     <Button x:Name="ExporttoExcelBtn" 
-                                            Content="📊 Export Excel" 
+                                            Content="📊 Export Excel ▾" 
                                             Style="{StaticResource ExportButtonStyle}"
-                                            ToolTip="Export schedule to CSV"
-                                            Click="ExporttoExcelBtn_Click"/>
+                                            ToolTip="Export schedule options"
+                                            Click="ExporttoExcelBtn_Click">
+                                        <Button.ContextMenu>
+                                            <ContextMenu x:Name="ExportMenu">
+                                                <MenuItem Header="📄 Export Standard Schedule (CSV)" Click="ExportStandard_Click"/>
+                                                <Separator/>
+                                                <MenuItem Header="📝 Export Official Teaching Load (Excel)" Click="ExportTeachingLoad_Click"/>
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
+                                    </Button>
                                 </StackPanel>
                             </Grid>
                         </StackPanel>

@@ -196,14 +196,9 @@ namespace UniversityScheduler.Views
 
             foreach (var instr in instructors)
             {
-                // Clean titles
-                string cleanName = instr.Name
-                    .Replace("Dr.", "").Replace("Mr.", "").Replace("Ms.", "").Replace("Mrs.", "")
-                    .Replace("Prof.", "").Replace("Engr.", "").Trim();
-
-                var parts = cleanName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                string lastName = parts.Length > 0 ? parts.Last() : cleanName;
-                string initial = parts.Length > 0 ? parts[0].Substring(0, 1) : "";
+                // We no longer need string splitting/replacing! Just use the direct fields.
+                string lastName = string.IsNullOrWhiteSpace(instr.Surname) ? instr.FullName : instr.Surname;
+                string initial = !string.IsNullOrWhiteSpace(instr.FirstName) ? instr.FirstName.Substring(0, 1) : "";
 
                 parsedList.Add((instr.Id, lastName, initial));
             }
@@ -214,13 +209,11 @@ namespace UniversityScheduler.Views
             {
                 if (group.Count() == 1)
                 {
-                    // Unique Last Name -> "Turing"
                     var item = group.First();
                     result[item.Id] = item.LastName;
                 }
                 else
                 {
-                    // Duplicate Last Name -> "A. Turing"
                     foreach (var item in group)
                     {
                         result[item.Id] = $"{item.FirstInitial}. {item.LastName}";
@@ -313,7 +306,7 @@ namespace UniversityScheduler.Views
                 }
                 else if (cls.Instructor != null)
                 {
-                    instrName = cls.Instructor.Name;
+                    instrName = cls.Instructor.FullName;
                 }
                 info += instrName;
             }

@@ -148,11 +148,11 @@ namespace UniversityScheduler
 
                // Overload Alert
                if (currentUnits > inst.MaxUnits)
-                  overload.Add(new AlertItem { Icon = "", Title = inst.Name, Description = $" {currentUnits}/{inst.MaxUnits} Units", RelatedId = inst.Id, Type = "Instructor" });
+                  overload.Add(new AlertItem { Icon = "", Title = inst.FullName, Description = $" {currentUnits}/{inst.MaxUnits} Units", RelatedId = inst.Id, Type = "Instructor" });
 
                // Underload Alert
                if (currentUnits > 0 && currentUnits < (inst.MaxUnits * 0.75))
-                  underload.Add(new AlertItem { Icon = "", Title = inst.Name, Description = $"{currentUnits}/{inst.MaxUnits} Units", RelatedId = inst.Id, Type = "Instructor" });
+                  underload.Add(new AlertItem { Icon = "", Title = inst.FullName, Description = $"{currentUnits}/{inst.MaxUnits} Units", RelatedId = inst.Id, Type = "Instructor" });
 
                // Time Analysis (Straight/Gaps)
                var dayGroups = myScheds.GroupBy(s => s.Day);
@@ -178,7 +178,7 @@ namespace UniversityScheduler
                            gaps.Add(new AlertItem
                            {
                               Icon = "",
-                              Title = inst.Name,
+                              Title = inst.FullName,
                               Description = $"{s.Day}: {gapHours:0.#}hr Gap",
                               RelatedId = inst.Id,
                               Type = "Instructor"
@@ -197,13 +197,13 @@ namespace UniversityScheduler
                   // STRAIGHT TEACHING ALERT (> 3 Hours)
                   if (currentStreakHours >= 3)
                   {
-                        string uniqueKey = $"{inst.Name}-{s.Day}";
-                        if (!continuous.Any(x => x.Title == inst.Name && x.Description.StartsWith(s.Day)))
+                        string uniqueKey = $"{inst.FullName}-{s.Day}";
+                        if (!continuous.Any(x => x.Title == inst.FullName && x.Description.StartsWith(s.Day)))
                         {
                            continuous.Add(new AlertItem
                            {
                               Icon = "",
-                              Title = inst.Name,
+                              Title = inst.FullName,
                               Description = $"{s.Day}: {currentStreakHours:0.#}hrs Straight",
                               RelatedId = inst.Id,
                               Type = "Instructor"

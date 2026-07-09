@@ -14,16 +14,43 @@
             <StackPanel>
                 <TextBlock Text="New Instructor Details" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
 
-                <Grid Margin="0,0,0,10">
+               <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="100"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                        <TextBlock Text="Full Name:"/>
-                        <TextBox x:Name="NameTxt" Height="30" TextChanged="NameTxt_TextChanged"/>
+                        <ColumnDefinition Width="75"/> <ColumnDefinition Width="*"/>  <ColumnDefinition Width="*"/>  <ColumnDefinition Width="*"/>  <ColumnDefinition Width="65"/> <ColumnDefinition Width="65"/> </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                        <TextBlock Text="Title:"/>
+                        <ComboBox x:Name="TitleCombo" Height="30" IsEditable="True">
+                            <ComboBoxItem Content="Mr."/>
+                            <ComboBoxItem Content="Ms."/>
+                            <ComboBoxItem Content="Mrs."/>
+                            <ComboBoxItem Content="Dr."/>
+                            <ComboBoxItem Content="Engr."/>
+                            <ComboBoxItem Content="Atty."/>
+                        </ComboBox>
                     </StackPanel>
-                    <StackPanel Grid.Column="1">
+
+                    <StackPanel Grid.Column="1" Margin="0,0,5,0">
+                        <TextBlock Text="First Name:"/>
+                        <TextBox x:Name="FirstNameTxt" Height="30" TextChanged="NameTxt_TextChanged"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Margin="0,0,5,0">
+                        <TextBlock Text="Middle Name:"/>
+                        <TextBox x:Name="MiddleNameTxt" Height="30" TextChanged="NameTxt_TextChanged"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3" Margin="0,0,5,0">
+                        <TextBlock Text="Surname:"/>
+                        <TextBox x:Name="SurnameTxt" Height="30" TextChanged="NameTxt_TextChanged"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4" Margin="0,0,10,0">
+                        <TextBlock Text="Suffix:"/>
+                        <TextBox x:Name="SuffixTxt" Height="30"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="5">
                         <TextBlock Text="Initials:"/>
                         <TextBox x:Name="InitialsTxt" Height="30"/>
                     </StackPanel>
@@ -92,6 +119,36 @@
                         </ScrollViewer>
                     </Border>
                 </StackPanel>
+
+                <TextBlock Text="Official Template Info:" FontWeight="Bold" Margin="0,15,0,5"/>
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Margin="0,0,5,0">
+                        <TextBlock Text="Home Address:" FontSize="11" Foreground="Gray"/>
+                        <TextBox x:Name="AddressTxt" Height="25" Margin="0,2,0,5"/>
+
+                        <TextBlock Text="Baccalaureate Degree:" FontSize="11" Foreground="Gray"/>
+                        <TextBox x:Name="BaccTxt" Height="25" Margin="0,2,0,5"/>
+
+                        <TextBlock Text="Master's Degree:" FontSize="11" Foreground="Gray"/>
+                        <TextBox x:Name="MasterTxt" Height="25"/>
+
+                        <TextBlock Text="Doctoral Degree:" FontSize="11" Foreground="Gray"/>
+                        <TextBox x:Name="DoctorTxt" Height="25" Margin="0,2,0,5"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                        <TextBlock Text="Teaching Exp (Public Years):" FontSize="11" Foreground="Gray"/>
+                        <TextBox x:Name="ExpPublicTxt" Height="25" Text="0" Margin="0,2,0,5"/>
+
+                        <TextBlock Text="Teaching Exp (Private Years):" FontSize="11" Foreground="Gray"/>
+                        <TextBox x:Name="ExpPrivateTxt" Height="25" Text="0"/>
+                    </StackPanel>
+                </Grid>
 
                 <Separator Margin="0,10"/>
 

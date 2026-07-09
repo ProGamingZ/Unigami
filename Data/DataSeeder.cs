@@ -177,7 +177,9 @@ namespace UniversityScheduler.Data
                     
                     // Dean: Assigned to a Lecture Room. Prefers Seniors/Thesis (Year 4).
                     new Instructor { 
-                        Name = "Dr. Alan Turing", Initials = "AT", Program = "BSCS", Status = "Full-time", MaxUnits = 24, 
+                        FirstName = "Alan", 
+                        Surname = "Turing",
+                        Initials = "AT", Program = "BSCS", Status = "Full-time", MaxUnits = 24, 
                         SchedulePreferences = "Mon,Wed|08:00-11:00;Tue,Thu|13:00-16:00",
                         PreferredYearLevels = "4",
                         AssignedRoomId = GetRoom("301") // Example Room
@@ -185,7 +187,9 @@ namespace UniversityScheduler.Data
 
                     // Full-time Prof: Teaches core programming. Prefers Freshmen (Year 1, 2). Assigned to a Lab.
                     new Instructor { 
-                        Name = "Prof. Grace Hopper", Initials = "GH", Program = "BSCS", Status = "Full-time", MaxUnits = 21, 
+                        FirstName = "Grace",
+                        Surname = "Hopper",
+                        Initials = "GH", Program = "BSCS", Status = "Full-time", MaxUnits = 21, 
                         SchedulePreferences = "Mon,Wed,Fri|07:30-11:30;Mon,Wed,Fri|13:00-16:00",
                         PreferredYearLevels = "1,2",
                         AssignedRoomId = GetRoom("Lab 1") 
@@ -193,7 +197,9 @@ namespace UniversityScheduler.Data
 
                     // Part-time Industry: No room assigned. Prefers specialized Major subjects (Year 3).
                     new Instructor { 
-                        Name = "Engr. Linus Torvalds", Initials = "LT", Program = "BSCS", Status = "Part-time", MaxUnits = 12, 
+                        FirstName = "Linus",
+                        Surname = "Torvalds",
+                        Initials = "LT", Program = "BSCS", Status = "Part-time", MaxUnits = 12, 
                         SchedulePreferences = "Mon,Wed,Fri|17:30-20:30;Sat|08:00-12:00",
                         PreferredYearLevels = "3",
                         AssignedRoomId = null 
@@ -201,7 +207,9 @@ namespace UniversityScheduler.Data
 
                     // Visiting Lecturer: No room assigned.
                     new Instructor { 
-                        Name = "Dr. Ada Lovelace", Initials = "AL", Program = "BSCS", Status = "Visiting", MaxUnits = 9, 
+                        FirstName = "Ada",
+                        Surname = "Lovelace",
+                        Initials = "AL", Program = "BSCS", Status = "Visiting", MaxUnits = 9, 
                         SchedulePreferences = "Tue|13:00-17:00;Thu|09:00-12:00",
                         PreferredYearLevels = "2,3",
                         AssignedRoomId = null
@@ -209,7 +217,9 @@ namespace UniversityScheduler.Data
 
                     // Junior Instructor: Assigned to a Lab. Takes lower years.
                     new Instructor { 
-                        Name = "Mr. Dennis Ritchie", Initials = "DR", Program = "BSCS", Status = "Full-time", MaxUnits = 24, 
+                        FirstName = "Dennis",
+                        Surname = "Ritchie",
+                        Initials = "DR", Program = "BSCS", Status = "Full-time", MaxUnits = 24, 
                         SchedulePreferences = "Mon,Tue,Thu|09:00-12:00;Mon,Tue,Thu|13:00-18:00;Fri|09:00-12:00",
                         PreferredYearLevels = "1,2",
                         AssignedRoomId = GetRoom("Lab 2")
@@ -220,7 +230,9 @@ namespace UniversityScheduler.Data
 
                     // Senior Prof: Assigned Room 401. Prefers Seniors.
                     new Instructor {  
-                        Name = "Dr. Tim Berners-Lee", Initials = "TBL", Program = "BSIT", Status = "Full-time", MaxUnits = 24, 
+                        FirstName = "Tim",
+                        Surname = "Berners-Lee",
+                        Initials = "TBL", Program = "BSIT", Status = "Full-time", MaxUnits = 24, 
                         SchedulePreferences = "Mon,Tue,Wed,Thu|08:00-12:00;Mon,Tue,Wed,Thu|13:00-16:00",
                         PreferredYearLevels = "3,4",
                         AssignedRoomId = GetRoom("401")
@@ -228,7 +240,9 @@ namespace UniversityScheduler.Data
 
                     // Networking Specialist: Assigned a Lab.
                     new Instructor { 
-                        Name = "Engr. Vint Cerf", Initials = "VC", Program = "BSIT", Status = "Full-time", MaxUnits = 9, 
+                        FirstName = "Vint",
+                        Surname = "Cerf",
+                        Initials = "VC", Program = "BSIT", Status = "Full-time", MaxUnits = 9, 
                         SchedulePreferences = "Sat|08:00-12:00;Sat|13:00-17:00",
                         PreferredYearLevels = "3,4",
                         AssignedRoomId = GetRoom("Lab 3")
@@ -236,7 +250,9 @@ namespace UniversityScheduler.Data
 
                     // Full-time: Assigned Room 302.
                     new Instructor {  
-                        Name = "Prof. Radia Perlman", Initials = "RP", Program = "BSIT", Status = "Full-time",  MaxUnits = 21, 
+                        FirstName = "Radia",
+                        Surname = "Perlman",
+                        Initials = "RP", Program = "BSIT", Status = "Full-time",  MaxUnits = 21, 
                         SchedulePreferences = "Tue,Thu,Fri|07:00-12:00;Tue,Thu|13:00-15:00",
                         PreferredYearLevels = "1,2",
                         AssignedRoomId = GetRoom("302")
@@ -244,7 +260,9 @@ namespace UniversityScheduler.Data
 
                     // Part-time: No room.
                     new Instructor { 
-                        Name = "Ms. Margaret Hamilton", Initials = "MH", Program = "BSIT", Status = "Part-time", MaxUnits = 12, 
+                        FirstName = "Margaret",
+                        Surname = "Hamilton",
+                        Initials = "MH", Program = "BSIT", Status = "Part-time", MaxUnits = 12, 
                         SchedulePreferences = "Mon,Wed,Fri|07:30-11:30",
                         PreferredYearLevels = "1,2",
                         AssignedRoomId = null
@@ -252,7 +270,9 @@ namespace UniversityScheduler.Data
 
                     // Probationary Full-time: Assigned Room 404.
                     new Instructor { 
-                        Name = "Mr. Ken Thompson", Initials = "KT", Program = "BSIT", Status = "Full-time", MaxUnits = 18, 
+                        FirstName = "Ken",
+                        Surname = "Thompson",
+                        Initials = "KT", Program = "BSIT", Status = "Full-time", MaxUnits = 18, 
                         SchedulePreferences = "Mon,Wed|10:00-14:00;Tue,Thu|16:00-20:00",
                         PreferredYearLevels = "1,2",
                         AssignedRoomId = GetRoom("404")
@@ -263,7 +283,9 @@ namespace UniversityScheduler.Data
 
                     // Dept Chair: Assigned Room 303.
                     new Instructor { 
-                        Name = "Dr. Edgar Codd", Initials = "EC", Program = "BSIS", Status = "Full-time", MaxUnits = 24, 
+                        FirstName = "Edgar",
+                        Surname = "Codd",
+                        Initials = "EC", Program = "BSIS", Status = "Full-time", MaxUnits = 24, 
                         SchedulePreferences = "Mon,Tue,Wed,Thu|09:00-12:00;Mon,Tue,Wed,Thu|13:30-16:30",
                         PreferredYearLevels = "3,4",
                         AssignedRoomId = GetRoom("303")
@@ -271,7 +293,9 @@ namespace UniversityScheduler.Data
 
                     // Visiting
                     new Instructor { 
-                        Name = "Prof. Peter Chen", Initials = "PC", Program = "BSIS", Status = "Visiting", MaxUnits = 6, 
+                        FirstName = "Peter",
+                        Surname = "Chen",
+                        Initials = "PC", Program = "BSIS", Status = "Visiting", MaxUnits = 6, 
                         SchedulePreferences = "Wed|13:00-17:00",
                         PreferredYearLevels = "3",
                         AssignedRoomId = null
@@ -279,7 +303,9 @@ namespace UniversityScheduler.Data
 
                     // Full-time: Assigned Room 304.
                     new Instructor { 
-                        Name = "Ms. Barbara Liskov", Initials = "BL", Program = "BSIS", Status = "Full-time", MaxUnits = 24, 
+                        FirstName = "Barbara",
+                        Surname = "Liskov",
+                        Initials = "BL", Program = "BSIS", Status = "Full-time", MaxUnits = 24, 
                         SchedulePreferences = "Mon,Tue,Thu,Fri|08:00-12:00;Mon,Tue,Thu,Fri|13:00-17:00",
                         PreferredYearLevels = "1,2",
                         AssignedRoomId = GetRoom("304")
@@ -287,7 +313,9 @@ namespace UniversityScheduler.Data
 
                     // Part-time
                     new Instructor {  
-                        Name = "Mr. Larry Ellison", Initials = "LE", Program = "BSIS", Status = "Part-time", MaxUnits = 9, 
+                        FirstName = "Larry",
+                        Surname = "Ellison",
+                        Initials = "LE", Program = "BSIS", Status = "Part-time", MaxUnits = 9, 
                         SchedulePreferences = "Tue,Thu|17:30-20:30",
                         PreferredYearLevels = "4",
                         AssignedRoomId = null
@@ -295,7 +323,9 @@ namespace UniversityScheduler.Data
 
                     // Full-time: Assigned Lab 4.
                     new Instructor { 
-                        Name = "Dr. Michael Stonebraker", Initials = "MS", Program = "BSIS", Status = "Full-time", MaxUnits = 21, 
+                        FirstName = "Michael",
+                        Surname = "Stonebraker",
+                        Initials = "MS", Program = "BSIS", Status = "Full-time", MaxUnits = 21, 
                         SchedulePreferences = "Mon,Wed,Fri|10:00-13:00;Mon,Wed,Fri|15:00-19:00",
                         PreferredYearLevels = "2,3",
                         AssignedRoomId = GetRoom("Lab 4")
@@ -306,7 +336,9 @@ namespace UniversityScheduler.Data
 
                     // Game Dev Lead: Assigned Room 201.
                     new Instructor { 
-                        Name = "Prof. Shigeru Miyamoto", Initials = "SM", Program = "BSEMC", Status = "Full-time", MaxUnits = 24, 
+                        FirstName = "Shigeru",
+                        Surname = "Miyamoto",
+                        Initials = "SM", Program = "BSEMC", Status = "Full-time", MaxUnits = 24, 
                         SchedulePreferences = "Mon,Tue,Wed,Thu,Fri|10:00-13:00;Mon,Tue,Wed,Thu,Fri|14:00-19:00",
                         PreferredYearLevels = "1,2",
                         AssignedRoomId = GetRoom("201")
@@ -314,7 +346,9 @@ namespace UniversityScheduler.Data
 
                     // Part-time 3D Artist
                     new Instructor { 
-                        Name = "Mr. Hideo Kojima", Initials = "HK", Program = "BSEMC", Status = "Part-time", MaxUnits = 12, 
+                        FirstName = "Hideo",
+                        Surname = "Kojima",
+                        Initials = "HK", Program = "BSEMC", Status = "Part-time", MaxUnits = 12, 
                         SchedulePreferences = "Mon,Wed,Fri|18:00-21:00",
                         PreferredYearLevels = "3,4",
                         AssignedRoomId = null
@@ -322,7 +356,9 @@ namespace UniversityScheduler.Data
 
                     // Animation: Assigned Room 202.
                     new Instructor { 
-                        Name = "Ms. Hayao Miyazaki", Initials = "HM", Program = "BSEMC", Status = "Full-time", MaxUnits = 21, 
+                        FirstName = "Hayao",
+                        Surname = "Miyazaki",
+                        Initials = "HM", Program = "BSEMC", Status = "Full-time", MaxUnits = 21, 
                         SchedulePreferences = "Tue,Thu|08:00-12:00;Tue,Thu|13:00-18:00",
                         PreferredYearLevels = "1,2",
                         AssignedRoomId = GetRoom("202")
@@ -330,7 +366,9 @@ namespace UniversityScheduler.Data
 
                     // Sound Engineer: Assigned Room 305.
                     new Instructor { 
-                        Name = "Mr. Nobuo Uematsu", Initials = "NU", Program = "BSEMC", Status = "Full-time", MaxUnits = 6, 
+                        FirstName = "Nobuo",
+                        Surname = "Uematsu",
+                        Initials = "NU", Program = "BSEMC", Status = "Full-time", MaxUnits = 6, 
                         SchedulePreferences = "Sat|09:00-12:00",
                         PreferredYearLevels = "1,2,3,4",
                         AssignedRoomId = GetRoom("305")
@@ -338,7 +376,9 @@ namespace UniversityScheduler.Data
 
                     // Programmer: Assigned Room 402.
                     new Instructor { 
-                        Name = "Dr. John Carmack", Initials = "JC", Program = "BSEMC", Status = "Full-time", MaxUnits = 24, 
+                        FirstName = "John",
+                        Surname = "Carmack",
+                        Initials = "JC", Program = "BSEMC", Status = "Full-time", MaxUnits = 24, 
                         SchedulePreferences = "Mon,Tue,Wed,Thu,Fri|08:00-12:00;Mon,Tue,Wed,Thu,Fri|13:00-16:00",
                         PreferredYearLevels = "3,4",
                         AssignedRoomId = GetRoom("402")

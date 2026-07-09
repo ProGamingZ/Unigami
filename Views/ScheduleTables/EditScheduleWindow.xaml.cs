@@ -202,7 +202,7 @@ namespace UniversityScheduler.Views
                 return;
             }
 
-            var allInst = _db.Instructors.OrderBy(i => i.Name).ToList();
+            var allInst = _db.Instructors.OrderBy(i => i.Surname).ThenBy(i => i.FirstName).ToList();
             
             // If Section is selected, filter by Program
             if (SectionCombo.SelectedItem is StudentSection section)
@@ -421,7 +421,7 @@ namespace UniversityScheduler.Views
                     }
                     if (current.InstructorId != null && existing.InstructorId == current.InstructorId)
                     {
-                        ShowConflictMsg("Instructor Conflict", $"{existing.Instructor?.Name} is teaching {existing.Course?.Code} in {existing.Room?.Name}.");
+                        ShowConflictMsg("Instructor Conflict", $"{existing.Instructor?.FullName} is teaching {existing.Course?.Code} in {existing.Room?.Name}.");
                         return true;
                     }
                     if (existing.SectionId == current.SectionId)

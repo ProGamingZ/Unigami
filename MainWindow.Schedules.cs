@@ -98,7 +98,7 @@ namespace UniversityScheduler
          }
 
 
-         InstructorScheduleTable.Title = instructor.Name;
+         InstructorScheduleTable.Title = instructor.FullName;
       }
       private void ClearInstructorSchedule()
       {

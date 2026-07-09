@@ -46,16 +46,24 @@ namespace UniversityScheduler.Views
         // Auto-Generate Initials
         private void NameTxt_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (_editingId == 0 && !string.IsNullOrWhiteSpace(NameTxt.Text))
+            if (_editingId == 0)
             {
-                var parts = NameTxt.Text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                // Safely grab the text from the new boxes (using ? in case they are initializing)
+                string first = FirstNameTxt?.Text?.Trim() ?? "";
+                string middle = MiddleNameTxt?.Text?.Trim() ?? "";
+                string last = SurnameTxt?.Text?.Trim() ?? "";
+
+                string combinedName = $"{first} {middle} {last}";
+                var parts = combinedName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                
                 string initials = "";
                 foreach (var part in parts)
                 {
                     if (part.Length > 0 && char.IsLetter(part[0]))
                         initials += char.ToUpper(part[0]);
                 }
-                InitialsTxt.Text = initials;
+                
+                if (InitialsTxt != null) InitialsTxt.Text = initials;
             }
         }
 
@@ -67,9 +75,19 @@ namespace UniversityScheduler.Views
             _editingId = instructorToEdit.Id;
             this.Title = "Edit Instructor";
             
-            NameTxt.Text = instructorToEdit.Name;
+            TitleCombo.Text = instructorToEdit.Title;
+            SurnameTxt.Text = instructorToEdit.Surname;
+            FirstNameTxt.Text = instructorToEdit.FirstName;
+            MiddleNameTxt.Text = instructorToEdit.MiddleName;
+            SuffixTxt.Text = instructorToEdit.Suffix;
             InitialsTxt.Text = instructorToEdit.Initials;
             UnitsTxt.Text = instructorToEdit.MaxUnits.ToString();
+            AddressTxt.Text = instructorToEdit.HomeAddress;
+            BaccTxt.Text = instructorToEdit.BaccalaureateDegree;
+            MasterTxt.Text = instructorToEdit.MastersDegree;
+            DoctorTxt.Text = instructorToEdit.DoctoralDegree;
+            ExpPublicTxt.Text = instructorToEdit.ExperiencePublic.ToString();
+            ExpPrivateTxt.Text = instructorToEdit.ExperiencePrivate.ToString();
             
             // 1. Set Assigned Room
             if (instructorToEdit.AssignedRoomId != null)
@@ -339,7 +357,11 @@ namespace UniversityScheduler.Views
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(NameTxt.Text)) { MessageBox.Show("Name is required."); return; }
+            if (string.IsNullOrWhiteSpace(SurnameTxt.Text) || string.IsNullOrWhiteSpace(FirstNameTxt.Text)) 
+            { 
+                MessageBox.Show("Surname and First Name are required."); 
+                return; 
+            }
             if (!int.TryParse(UnitsTxt.Text, out int units)) { MessageBox.Show("Invalid Units."); return; }
 
             var selectedProgs = AvailablePrograms.Where(p => p.IsSelected).Select(p => p.Name).ToList();
@@ -365,13 +387,20 @@ namespace UniversityScheduler.Views
             string finalSchedule = string.Join(";", _timeBlocks.Select(b => b.ValueString));
             string finalCoursePrefs = string.Join(",", _preferredCourses.Select(c => c.Code));
 
+            int expPub = int.TryParse(ExpPublicTxt.Text, out int ep) ? ep : 0;
+            int expPriv = int.TryParse(ExpPrivateTxt.Text, out int epr) ? epr : 0;
+
             using (var db = new AppDbContext())
             {
                 if (_editingId == 0)
                 {
                     var newInstructor = new Instructor
                     {
-                        Name = NameTxt.Text,
+                        Title = TitleCombo.Text.Trim(),
+                        Surname = SurnameTxt.Text.Trim(),
+                        FirstName = FirstNameTxt.Text.Trim(),
+                        MiddleName = MiddleNameTxt.Text.Trim(),
+                        Suffix = SuffixTxt.Text.Trim(),
                         Initials = InitialsTxt.Text,
                         Status = (StatusCombo.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time",
                         Program = finalProgramStr,
@@ -379,7 +408,13 @@ namespace UniversityScheduler.Views
                         SchedulePreferences = finalSchedule,
                         AssignedRoomId = roomId,
                         PreferredYearLevels = yearString,
-                        PreferredCourseCodes = finalCoursePrefs
+                        PreferredCourseCodes = finalCoursePrefs,
+                        HomeAddress = AddressTxt.Text,
+                        BaccalaureateDegree = BaccTxt.Text,
+                        MastersDegree = MasterTxt.Text,
+                        DoctoralDegree = DoctorTxt.Text,
+                        ExperiencePublic = expPub,
+                        ExperiencePrivate = expPriv
                     };
                     db.Instructors.Add(newInstructor);
                 }
@@ -388,7 +423,11 @@ namespace UniversityScheduler.Views
                     var existing = db.Instructors.Find(_editingId);
                     if (existing != null)
                     {
-                        existing.Name = NameTxt.Text;
+                        existing.Title = TitleCombo.Text.Trim();
+                        existing.Surname = SurnameTxt.Text.Trim();
+                        existing.FirstName = FirstNameTxt.Text.Trim();
+                        existing.MiddleName = MiddleNameTxt.Text.Trim();
+                        existing.Suffix = SuffixTxt.Text.Trim();
                         existing.Initials = InitialsTxt.Text;
                         existing.Status = (StatusCombo.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time";
                         existing.Program = finalProgramStr;
@@ -397,6 +436,12 @@ namespace UniversityScheduler.Views
                         existing.AssignedRoomId = roomId;
                         existing.PreferredYearLevels = yearString;
                         existing.PreferredCourseCodes = finalCoursePrefs;
+                        existing.HomeAddress = AddressTxt.Text;
+                        existing.BaccalaureateDegree = BaccTxt.Text;
+                        existing.MastersDegree = MasterTxt.Text;
+                        existing.DoctoralDegree = DoctorTxt.Text;
+                        existing.ExperiencePublic = expPub;
+                        existing.ExperiencePrivate = expPriv;
                     }
                 }
                 db.SaveChanges();

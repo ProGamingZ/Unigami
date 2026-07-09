@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using UniversityScheduler.Data;
+using ClosedXML.Excel;
 
 namespace UniversityScheduler
 {
@@ -12,10 +13,161 @@ namespace UniversityScheduler
    {
       private void ExporttoExcelBtn_Click(object sender, RoutedEventArgs e)
       {
+         if (sender is Button btn && btn.ContextMenu != null)
+         {
+             btn.ContextMenu.PlacementTarget = btn;
+             btn.ContextMenu.IsOpen = true;
+         }
+      }
+
+      private void ExportStandard_Click(object sender, RoutedEventArgs e)
+      {
          if (InstructorSelector.SelectedItem is not Instructor selectedInstructor) { MessageBox.Show("Select instructor."); return; }
-         SaveFileDialog saveDialog = new SaveFileDialog { Filter = "Excel CSV (*.csv)|*.csv", FileName = $"{selectedInstructor.Name}_Schedule.csv" };
+         SaveFileDialog saveDialog = new SaveFileDialog { Filter = "Excel CSV (*.csv)|*.csv", FileName = $"{selectedInstructor.FullName}_Standard_Schedule.csv" };
          if (saveDialog.ShowDialog() == true) ExportScheduleToCsv(saveDialog.FileName, selectedInstructor.Id, null);
       }
+
+      private void ExportTeachingLoad_Click(object sender, RoutedEventArgs e)
+      {
+         if (InstructorSelector.SelectedItem is not Instructor selectedInstructor) { MessageBox.Show("Select instructor."); return; }
+         
+         SaveFileDialog saveDialog = new SaveFileDialog { Filter = "Excel Workbook (*.xlsx)|*.xlsx", FileName = $"{selectedInstructor.FullName}_Teaching_Load.xlsx" };
+         if (saveDialog.ShowDialog() != true) return;
+
+         try
+         {
+            // 1. Locate the Template File
+            string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", "TEACHING LOAD TEMPLATE.xlsx");
+            if (!File.Exists(templatePath))
+            {
+                MessageBox.Show("Template file not found! Please ensure 'TEACHING LOAD TEMPLATE.xlsx' is in the Templates folder.", "Missing File", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            using (var db = new AppDbContext())
+            {
+               var instructor = db.Instructors.Find(selectedInstructor.Id);
+               if (instructor == null) return;
+
+               var allSchedules = db.Schedules.Include(s => s.Course).Include(s => s.Room).Include(s => s.Section)
+                                 .Where(s => s.Semester == _currentSemester && s.InstructorId == instructor.Id)
+                                 .ToList();
+
+               // 2. Split the schedules based on our Time Rule
+               var overloadSchedules = allSchedules.Where(s => IsOverload(s.StartTime, s.EndTime)).ToList();
+               var regularSchedules = allSchedules.Where(s => !IsOverload(s.StartTime, s.EndTime)).ToList();
+
+               // 3. Open the Workbook
+               using (var workbook = new XLWorkbook(templatePath))
+               {
+                   // Fill the Regular Sheet
+                   if (workbook.TryGetWorksheet("REGULAR", out var regularSheet))
+                   {
+                       FillTeachingLoadSheet(regularSheet, instructor, regularSchedules);
+                   }
+
+                   // Fill the Overload Sheet
+                   if (workbook.TryGetWorksheet("OVERLOAD", out var overloadSheet))
+                   {
+                       FillTeachingLoadSheet(overloadSheet, instructor, overloadSchedules);
+                   }
+
+                   // 4. Save the combined file
+                   workbook.SaveAs(saveDialog.FileName);
+               }
+
+               MessageBox.Show($"Teaching Load exported successfully as a true Excel file!", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+         }
+         catch (Exception ex) { MessageBox.Show($"Error during Excel generation: {ex.Message}"); }
+      }
+
+      // HELPER METHOD: Fills out ANY sheet passed to it ---
+      private void FillTeachingLoadSheet(IXLWorksheet ws, Instructor instructor, List<ClassSchedule> schedules)
+      {
+           // Inject Static Data
+           ws.Cell("D8").Value = instructor.Surname;
+           ws.Cell("K8").Value = instructor.FirstName;
+           ws.Cell("R8").Value = instructor.MiddleName;
+           ws.Cell("AE8").Value = instructor.HomeAddress;
+           
+           ws.Cell("R11").Value = instructor.BaccalaureateDegree;
+           ws.Cell("R12").Value = instructor.MastersDegree;
+           ws.Cell("R13").Value = instructor.DoctoralDegree;
+           
+           ws.Cell("R15").Value = instructor.ExperiencePublic;
+           ws.Cell("AG15").Value = instructor.ExperiencePrivate;
+           ws.Cell("AS15").Value = instructor.ExperiencePublic + instructor.ExperiencePrivate;
+
+           // Inject Schedule Grid
+           foreach (var schedule in schedules)
+           {
+               int col = GetDayColumnExcel(schedule.Day);
+               int row = GetTimeRowExcel(schedule.StartTime);
+
+               if (col > 0 && row > 0)
+               {
+                   string classInfo = $"{schedule.Course?.Code}\n{schedule.Section?.FullDisplayName}\n{schedule.Room?.Name}";
+                   
+                   ws.Cell(row, col).Value = classInfo;
+                   ws.Cell(row, col).Style.Alignment.WrapText = true;
+                   ws.Cell(row, col).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                   ws.Cell(row, col).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+               }
+           }
+      }
+      
+      // --- THE TENTATIVE RULE FILTER ---
+      // Outside 8am-12pm and 1pm-5pm is overload. (Easy to edit later!)
+      private bool IsOverload(string startTimeStr, string endTimeStr)
+      {
+         TimeSpan start = ParseTime(startTimeStr);
+         TimeSpan end = ParseTime(endTimeStr);
+
+         TimeSpan morningStart = new TimeSpan(8, 0, 0);   // 8:00 AM
+         TimeSpan morningEnd = new TimeSpan(12, 0, 0);    // 12:00 PM
+         TimeSpan afternoonStart = new TimeSpan(13, 0, 0); // 1:00 PM
+         TimeSpan afternoonEnd = new TimeSpan(17, 0, 0);   // 5:00 PM
+
+         if (start < morningStart) return true; // Early morning
+         if (start >= morningEnd && start < afternoonStart) return true; // Lunch break
+         if (start >= afternoonEnd) return true; // Evening
+         if (end > afternoonEnd) return true; // Ends late
+
+         return false; // Fits perfectly inside regular hours
+      }
+      
+      // --- HELPER METHODS FOR EXCEL MAPPING ---
+      private int GetDayColumnExcel(string day)
+      {
+          return day switch
+          {
+              "Mon" => 4,   // Column D
+              "Tue" => 11,  // Column K
+              "Wed" => 17,  // Column Q
+              "Thu" => 23,  // Column W
+              "Fri" => 29,  // Column AC
+              "Sat" => 35,  // Column AI
+              _ => -1
+          };
+      }
+      private int GetTimeRowExcel(string startTimeStr)
+      {
+          TimeSpan time = ParseTime(startTimeStr);
+          
+          // Assuming 7:00 AM starts at Row 18, and each hour goes down 1 row.
+          // Example: 7 AM = 18, 8 AM = 19, 9 AM = 20...
+          int startRow = 18;
+          int startHour = 7; 
+          
+          if (time.Hours >= startHour)
+          {
+              return startRow + (time.Hours - startHour);
+          }
+          return -1;
+      }
+
+
       private void ExportClassBtn_Click(object sender, RoutedEventArgs e)
       {
          if (ClassSelector.SelectedItem == null) { MessageBox.Show("Select class."); return; }
@@ -84,7 +236,7 @@ namespace UniversityScheduler
                               int blockIndex = (int)((currentTime - ParseTime(activeClass.StartTime)).TotalMinutes / 30);
                               string line1 = activeClass.Course?.Code ?? "Subject";
                               string line2 = activeClass.Room?.Name ?? "TBA";
-                              string line3 = instructorId != null ? (activeClass.Section?.FullDisplayName ?? "Sec") : (activeClass.Instructor?.Name ?? "TBA");
+                              string line3 = instructorId != null ? (activeClass.Section?.FullDisplayName ?? "Sec") : (activeClass.Instructor?.FullName ?? "TBA");
                               
                               switch (blockIndex) {
                                  case 0: rowData.Add($"\"{line1}\""); break;
@@ -136,7 +288,7 @@ namespace UniversityScheduler
 
          // Build the Display String
          StringBuilder sb = new StringBuilder();
-         sb.AppendLine($"Teaching Load: {instructor.Name}");
+         sb.AppendLine($"Teaching Load: {instructor.FullName}");
          sb.AppendLine("----------------------------------");
 
          foreach (var group in loadGroups)
@@ -264,7 +416,7 @@ namespace UniversityScheduler
 
             if (match != null)
             {
-            string instrName = match.Instructor?.Name ?? "TBA";
+            string instrName = match.Instructor?.FullName ?? "TBA";
                CreateRowUI(rootStack, req.Course!.Code, req.Course.Name, req.Course.Units.ToString(), instrName);
 
             // Add to total
@@ -365,7 +517,7 @@ namespace UniversityScheduler
                   MessageBox.Show("Locked schedule.", "Action Blocked", MessageBoxButton.OK, MessageBoxImage.Stop);
                   return;
             }
-            if (MessageBox.Show($"Clear schedule for {selectedInstructor.Name}?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"Clear schedule for {selectedInstructor.FullName}?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                   using (var db = new AppDbContext())
                   {

@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="Google.OrTools" Version="9.14.6206" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.10">
@@ -20,6 +21,12 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <Resource Include="UNIGAMIicon128.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Templates\TEACHING LOAD TEMPLATE.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
