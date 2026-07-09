@@ -8,17 +8,12 @@
     
     <Grid Background="#F7F9F9">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Global Info -->
-            <RowDefinition Height="*"/>    <!-- Semester Tabs -->
-            <RowDefinition Height="Auto"/> <!-- Save Button -->
-        </Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <RowDefinition Height="*"/>    <RowDefinition Height="Auto"/> </Grid.RowDefinitions>
 
-        <!-- GLOBAL INSTRUCTOR INFO -->
         <Border Grid.Row="0" Padding="20,20,20,5">
             <StackPanel>
                 <TextBlock Text="Global Instructor Details" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
 
-                <!-- NAME GRID -->
                 <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="75"/> <ColumnDefinition Width="*"/>  <ColumnDefinition Width="*"/>  <ColumnDefinition Width="*"/>  <ColumnDefinition Width="65"/> <ColumnDefinition Width="65"/> 
@@ -51,7 +46,6 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- OFFICIAL TEMPLATE INFO GRID -->
                 <TextBlock Text="Official Template Info:" FontWeight="Bold" Margin="0,5,0,5"/>
                 <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
@@ -78,10 +72,8 @@
             </StackPanel>
         </Border>
 
-        <!-- SEMESTER TABS -->
         <TabControl x:Name="SemesterTabs" Grid.Row="1" Margin="10,0,10,0">
             
-            <!-- ==================== SEMESTER 1 TAB ==================== -->
             <TabItem Header="Semester 1 Settings" FontWeight="SemiBold">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="10">
@@ -124,20 +116,68 @@
                             </StackPanel>
                         </Grid>
                         
-                        <StackPanel Margin="0,0,0,15">
-                            <TextBlock Text="Select Programs (Sem 1):" Margin="0,0,0,5"/>
-                            <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Height="80">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <ItemsControl x:Name="ProgramCheckListSem1">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="10,5" Foreground="#2C3E50" FontSize="13"/>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </ScrollViewer>
-                            </Border>
-                        </StackPanel>
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="Select Programs (Sem 1):" Margin="0,0,0,5"/>
+                                <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Height="110">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsControl x:Name="ProgramCheckListSem1">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="8,5" Foreground="#2C3E50" FontSize="13"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Assign Specific Sections:" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <Grid Margin="0,0,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/> <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox x:Name="AssignedSectionComboSem1" Height="28" DisplayMemberPath="FullDisplay" SelectedValuePath="Id" IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="True" TextSearch.TextPath="FullDisplay" DropDownOpened="AssignedSectionCombo_DropDownOpened"/>
+                                    <Button Grid.Column="1" Content="Add" Width="60" Margin="5,0,0,0" Style="{StaticResource SecondaryButton}" Click="AddAssignedSection_Click"/>
+                                </Grid>
+                                
+                                <ListBox x:Name="AssignedSectionsListSem1" Height="77" BorderBrush="#BDC3C7" BorderThickness="1" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="Transparent" BorderBrush="#7F8C8D" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                                <DockPanel LastChildFill="False">
+                                                    <TextBlock Text="{Binding FullDisplay}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                                                    <Button Content="X" DockPanel.Dock="Right" Padding="1" Width="16" Height="16" Cursor="Hand" Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0" Click="RemoveAssignedSection_Click" Tag="{Binding}"/>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Grid>
 
                         <Separator Margin="0,5"/>
 
@@ -185,16 +225,27 @@
                             <Button Grid.Column="4" Content="Add Block" Width="80" Style="{StaticResource SecondaryButton}" Click="AddBlock_Click"/>
                         </Grid>
 
-                        <ListBox x:Name="PreferencesListSem1" Height="80" Margin="0,0,0,15" BorderBrush="Gray" BorderThickness="1">
+                        <ListBox x:Name="PreferencesListSem1" Height="80" Margin="0,0,0,15" BorderBrush="#BDC3C7" BorderThickness="1" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/> <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                        <Button Grid.Column="1" Content="Remove" Background="#E74C3C" Foreground="White" FontSize="10" Padding="5,2" Margin="10,0,0,0" Click="RemoveBlock_Click" Tag="{Binding}"/>
-                                    </Grid>
+                                    <Border Background="Transparent" BorderBrush="#7F8C8D" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                        <DockPanel LastChildFill="False">
+                                            <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                                            <Button Content="X" DockPanel.Dock="Right" Padding="1" Width="16" Height="16" Cursor="Hand" Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0" Click="RemoveBlock_Click" Tag="{Binding}"/>
+                                        </DockPanel>
+                                    </Border>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -207,16 +258,28 @@
                             <ComboBox x:Name="PreferredCourseComboSem1" Height="30" DisplayMemberPath="FullDisplay" SelectedValuePath="Code" IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="True" TextSearch.TextPath="FullDisplay" DropDownOpened="PreferredCourseCombo_DropDownOpened"/>
                             <Button Grid.Column="1" Content="Add Course" Width="80" Margin="10,0,0,0" Style="{StaticResource SecondaryButton}" Click="AddPreferredCourse_Click"/>
                         </Grid>
-                        <ListBox x:Name="PreferredCoursesListSem1" Height="80" Margin="0,0,0,10" BorderBrush="Gray" BorderThickness="1">
+                        
+                        <ListBox x:Name="PreferredCoursesListSem1" Height="80" Margin="0,0,0,10" BorderBrush="#BDC3C7" BorderThickness="1" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/> <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding FullDisplay}" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                        <Button Grid.Column="1" Content="Remove" Background="#E74C3C" Foreground="White" FontSize="10" Padding="5,2" Margin="10,0,0,0" Click="RemovePreferredCourse_Click" Tag="{Binding}"/>
-                                    </Grid>
+                                    <Border Background="Transparent" BorderBrush="#7F8C8D" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                        <DockPanel LastChildFill="False">
+                                            <TextBlock Text="{Binding FullDisplay}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                                            <Button Content="X" DockPanel.Dock="Right" Padding="1" Width="16" Height="16" Cursor="Hand" Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0" Click="RemovePreferredCourse_Click" Tag="{Binding}"/>
+                                        </DockPanel>
+                                    </Border>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -224,7 +287,6 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!-- ==================== SEMESTER 2 TAB ==================== -->
             <TabItem Header="Semester 2 Settings" FontWeight="SemiBold">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="10">
@@ -267,20 +329,68 @@
                             </StackPanel>
                         </Grid>
                         
-                        <StackPanel Margin="0,0,0,15">
-                            <TextBlock Text="Select Programs (Sem 2):" Margin="0,0,0,5"/>
-                            <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Height="80">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <ItemsControl x:Name="ProgramCheckListSem2">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="10,5" Foreground="#2C3E50" FontSize="13"/>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </ScrollViewer>
-                            </Border>
-                        </StackPanel>
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="Select Programs (Sem 2):" Margin="0,0,0,5"/>
+                                <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Height="110">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsControl x:Name="ProgramCheckListSem2">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Margin="8,5" Foreground="#2C3E50" FontSize="13"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Assign Specific Sections:" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <Grid Margin="0,0,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/> <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox x:Name="AssignedSectionComboSem2" Height="28" DisplayMemberPath="FullDisplay" SelectedValuePath="Id" IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="True" TextSearch.TextPath="FullDisplay" DropDownOpened="AssignedSectionCombo_DropDownOpened"/>
+                                    <Button Grid.Column="1" Content="Add" Width="60" Margin="5,0,0,0" Style="{StaticResource SecondaryButton}" Click="AddAssignedSection_Click"/>
+                                </Grid>
+                                
+                                <ListBox x:Name="AssignedSectionsListSem2" Height="77" BorderBrush="#BDC3C7" BorderThickness="1" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="Transparent" BorderBrush="#7F8C8D" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                                <DockPanel LastChildFill="False">
+                                                    <TextBlock Text="{Binding FullDisplay}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                                                    <Button Content="X" DockPanel.Dock="Right" Padding="1" Width="16" Height="16" Cursor="Hand" Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0" Click="RemoveAssignedSection_Click" Tag="{Binding}"/>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Grid>
 
                         <Separator Margin="0,5"/>
 
@@ -328,16 +438,27 @@
                             <Button Grid.Column="4" Content="Add Block" Width="80" Style="{StaticResource SecondaryButton}" Click="AddBlock_Click"/>
                         </Grid>
 
-                        <ListBox x:Name="PreferencesListSem2" Height="80" Margin="0,0,0,15" BorderBrush="Gray" BorderThickness="1">
+                        <ListBox x:Name="PreferencesListSem2" Height="80" Margin="0,0,0,15" BorderBrush="#BDC3C7" BorderThickness="1" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/> <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                        <Button Grid.Column="1" Content="Remove" Background="#E74C3C" Foreground="White" FontSize="10" Padding="5,2" Margin="10,0,0,0" Click="RemoveBlock_Click" Tag="{Binding}"/>
-                                    </Grid>
+                                    <Border Background="Transparent" BorderBrush="#7F8C8D" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                        <DockPanel LastChildFill="False">
+                                            <TextBlock Text="{Binding DisplayString}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                                            <Button Content="X" DockPanel.Dock="Right" Padding="1" Width="16" Height="16" Cursor="Hand" Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0" Click="RemoveBlock_Click" Tag="{Binding}"/>
+                                        </DockPanel>
+                                    </Border>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -350,16 +471,28 @@
                             <ComboBox x:Name="PreferredCourseComboSem2" Height="30" DisplayMemberPath="FullDisplay" SelectedValuePath="Code" IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="True" TextSearch.TextPath="FullDisplay" DropDownOpened="PreferredCourseCombo_DropDownOpened"/>
                             <Button Grid.Column="1" Content="Add Course" Width="80" Margin="10,0,0,0" Style="{StaticResource SecondaryButton}" Click="AddPreferredCourse_Click"/>
                         </Grid>
-                        <ListBox x:Name="PreferredCoursesListSem2" Height="80" Margin="0,0,0,10" BorderBrush="Gray" BorderThickness="1">
+                        
+                        <ListBox x:Name="PreferredCoursesListSem2" Height="80" Margin="0,0,0,10" BorderBrush="#BDC3C7" BorderThickness="1" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/> <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding FullDisplay}" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                        <Button Grid.Column="1" Content="Remove" Background="#E74C3C" Foreground="White" FontSize="10" Padding="5,2" Margin="10,0,0,0" Click="RemovePreferredCourse_Click" Tag="{Binding}"/>
-                                    </Grid>
+                                    <Border Background="Transparent" BorderBrush="#7F8C8D" BorderThickness="1" CornerRadius="12" Padding="8,3" Margin="0,0,5,5">
+                                        <DockPanel LastChildFill="False">
+                                            <TextBlock Text="{Binding FullDisplay}" VerticalAlignment="Center" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                                            <Button Content="X" DockPanel.Dock="Right" Padding="1" Width="16" Height="16" Cursor="Hand" Background="Transparent" Foreground="#E74C3C" FontWeight="Bold" BorderThickness="0" Click="RemovePreferredCourse_Click" Tag="{Binding}"/>
+                                        </DockPanel>
+                                    </Border>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -368,7 +501,6 @@
             </TabItem>
         </TabControl>
 
-        <!-- SAVE BUTTON -->
         <Border Grid.Row="2" Background="White" BorderBrush="#BDC3C7" BorderThickness="0,1,0,0" Padding="10,10,10,0">
             <Button Content="Save Instructor (Both Semesters)" Height="40" Style="{StaticResource PrimaryButton}" FontWeight="Bold" Click="Save_Click"/>
         </Border>

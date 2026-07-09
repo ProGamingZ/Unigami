@@ -29,10 +29,10 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
+  <!-- <ItemGroup>
     <Content Include="schedule.db">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-  </ItemGroup>
+  </ItemGroup> -->
 </Project>

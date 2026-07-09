@@ -28,19 +28,28 @@ namespace UniversityScheduler.Views
         public string FullDisplay => $"{Code} - {DisplayString}";
     }
 
+    public class AssignedSectionItem
+    {
+        public int Id { get; set; }
+        public string FullDisplay { get; set; } = string.Empty;
+    }
+
     public partial class AddInstructorWindow : Window
     {
         // Semester 1 Collections
         private ObservableCollection<TimeBlockItem> _timeBlocksSem1 = new ObservableCollection<TimeBlockItem>();
         private ObservableCollection<PreferredCourseItem> _preferredCoursesSem1 = new ObservableCollection<PreferredCourseItem>();
+        private ObservableCollection<AssignedSectionItem> _assignedSectionsSem1 = new ObservableCollection<AssignedSectionItem>();
         public ObservableCollection<SelectableProgram> AvailableProgramsSem1 { get; set; } = new ObservableCollection<SelectableProgram>();
 
         // Semester 2 Collections
         private ObservableCollection<TimeBlockItem> _timeBlocksSem2 = new ObservableCollection<TimeBlockItem>();
         private ObservableCollection<PreferredCourseItem> _preferredCoursesSem2 = new ObservableCollection<PreferredCourseItem>();
+        private ObservableCollection<AssignedSectionItem> _assignedSectionsSem2 = new ObservableCollection<AssignedSectionItem>();
         public ObservableCollection<SelectableProgram> AvailableProgramsSem2 { get; set; } = new ObservableCollection<SelectableProgram>();
 
         private List<PreferredCourseItem> _allDatabaseCourses = new List<PreferredCourseItem>();
+        private List<AssignedSectionItem> _allDatabaseSections = new List<AssignedSectionItem>();
         private int _editingId = 0;
 
         public AddInstructorWindow()
@@ -89,10 +98,12 @@ namespace UniversityScheduler.Views
         {
             PreferencesListSem1.ItemsSource = _timeBlocksSem1;
             PreferredCoursesListSem1.ItemsSource = _preferredCoursesSem1;
+            AssignedSectionsListSem1.ItemsSource = _assignedSectionsSem1;
             ProgramCheckListSem1.ItemsSource = AvailableProgramsSem1;
 
             PreferencesListSem2.ItemsSource = _timeBlocksSem2;
             PreferredCoursesListSem2.ItemsSource = _preferredCoursesSem2;
+            AssignedSectionsListSem2.ItemsSource = _assignedSectionsSem2;
             ProgramCheckListSem2.ItemsSource = AvailableProgramsSem2;
         }
 
@@ -148,6 +159,7 @@ namespace UniversityScheduler.Views
                 }
                 LoadTimeBlocks(inst.SchedulePreferencesSem1, _timeBlocksSem1);
                 LoadPreferredCourses(inst.PreferredCourseCodesSem1, _preferredCoursesSem1);
+                LoadAssignedSections(inst.AssignedSectionsSem1, _assignedSectionsSem1);
             }
             else
             {
@@ -163,6 +175,7 @@ namespace UniversityScheduler.Views
                 }
                 LoadTimeBlocks(inst.SchedulePreferencesSem2, _timeBlocksSem2);
                 LoadPreferredCourses(inst.PreferredCourseCodesSem2, _preferredCoursesSem2);
+                LoadAssignedSections(inst.AssignedSectionsSem2, _assignedSectionsSem2);
             }
         }
 
@@ -191,6 +204,20 @@ namespace UniversityScheduler.Views
             }
         }
 
+        private void LoadAssignedSections(string dbString, ObservableCollection<AssignedSectionItem> targetList)
+        {
+            if (string.IsNullOrEmpty(dbString)) return;
+            var ids = dbString.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+            using (var db = new AppDbContext())
+            {
+                foreach (var id in ids)
+                {
+                    var s = db.Sections.FirstOrDefault(x => x.Id == id);
+                    if (s != null) targetList.Add(new AssignedSectionItem { Id = s.Id, FullDisplay = $"{s.Program} {s.YearLevel}-{s.Name}" });
+                }
+            }
+        }
+
         private void NameTxt_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_editingId == 0)
@@ -211,20 +238,75 @@ namespace UniversityScheduler.Views
             }
         }
 
-        // --- DYNAMIC EVENT HANDLERS (They check which tab is open!) ---
-
-        private void SelectAllDays_Click(object sender, RoutedEventArgs e)
+        // --- ASSIGNED SECTIONS HANDLERS ---
+        private void AssignedSectionCombo_DropDownOpened(object sender, EventArgs e)
         {
-            var panel = SemesterTabs.SelectedIndex == 0 ? DayCheckboxesSem1 : DayCheckboxesSem2;
-            foreach (var child in panel.Children) if (child is CheckBox cb) cb.IsChecked = true;
+            bool isSem1 = SemesterTabs.SelectedIndex == 0;
+            var targetProgs = isSem1 ? AvailableProgramsSem1 : AvailableProgramsSem2;
+            var selectedProgs = targetProgs.Where(p => p.IsSelected).Select(p => p.Name).ToList();
+
+            // 1. Gather Selected Year Levels
+            List<int> selectedYears = new List<int>();
+            if (isSem1)
+            {
+                if (CbYear1Sem1.IsChecked == true) selectedYears.Add(1);
+                if (CbYear2Sem1.IsChecked == true) selectedYears.Add(2);
+                if (CbYear3Sem1.IsChecked == true) selectedYears.Add(3);
+                if (CbYear4Sem1.IsChecked == true) selectedYears.Add(4);
+            }
+            else
+            {
+                if (CbYear1Sem2.IsChecked == true) selectedYears.Add(1);
+                if (CbYear2Sem2.IsChecked == true) selectedYears.Add(2);
+                if (CbYear3Sem2.IsChecked == true) selectedYears.Add(3);
+                if (CbYear4Sem2.IsChecked == true) selectedYears.Add(4);
+            }
+
+            // 2. Filter Sections by BOTH Program and Year Level
+            using (var db = new AppDbContext())
+            {
+                var validSections = db.Sections
+                    .Where(s => selectedProgs.Contains(s.Program) && selectedYears.Contains(s.YearLevel))
+                    .ToList();
+
+                _allDatabaseSections = validSections.Select(s => new AssignedSectionItem { Id = s.Id, FullDisplay = $"{s.Program} {s.YearLevel}-{s.Name}" }).OrderBy(s => s.FullDisplay).ToList();
+
+                if (isSem1) AssignedSectionComboSem1.ItemsSource = _allDatabaseSections;
+                else AssignedSectionComboSem2.ItemsSource = _allDatabaseSections;
+            }
+
+            // 3. Show alert if nothing matches
+            if (_allDatabaseSections.Count == 0) 
+                MessageBox.Show("No sections found for the selected Programs and Year Levels.", "Filter Notice", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void SelectNoDays_Click(object sender, RoutedEventArgs e)
+        private void AddAssignedSection_Click(object sender, RoutedEventArgs e)
         {
-            var panel = SemesterTabs.SelectedIndex == 0 ? DayCheckboxesSem1 : DayCheckboxesSem2;
-            foreach (var child in panel.Children) if (child is CheckBox cb) cb.IsChecked = false;
+            bool isSem1 = SemesterTabs.SelectedIndex == 0;
+            var combo = isSem1 ? AssignedSectionComboSem1 : AssignedSectionComboSem2;
+            var targetList = isSem1 ? _assignedSectionsSem1 : _assignedSectionsSem2;
+
+            if (combo.SelectedItem is AssignedSectionItem selectedItem)
+            {
+                if (targetList.Any(s => s.Id == selectedItem.Id)) { MessageBox.Show("Section already added."); return; }
+                targetList.Add(selectedItem);
+                combo.SelectedItem = null;
+                combo.Text = "";
+            }
+            else MessageBox.Show("Select a valid section first.");
         }
 
+        private void RemoveAssignedSection_Click(object sender, RoutedEventArgs e)
+        {
+            bool isSem1 = SemesterTabs.SelectedIndex == 0;
+            if (sender is Button btn && btn.Tag is AssignedSectionItem item)
+            {
+                if (isSem1) _assignedSectionsSem1.Remove(item);
+                else _assignedSectionsSem2.Remove(item);
+            }
+        }
+
+        // --- PREFERRED COURSES HANDLERS ---
         private void PreferredCourseCombo_DropDownOpened(object sender, EventArgs e)
         {
             bool isSem1 = SemesterTabs.SelectedIndex == 0;
@@ -292,15 +374,25 @@ namespace UniversityScheduler.Views
             }
         }
 
+        // --- TIME BLOCK HANDLERS ---
+        private void SelectAllDays_Click(object sender, RoutedEventArgs e)
+        {
+            var panel = SemesterTabs.SelectedIndex == 0 ? DayCheckboxesSem1 : DayCheckboxesSem2;
+            foreach (var child in panel.Children) if (child is CheckBox cb) cb.IsChecked = true;
+        }
+
+        private void SelectNoDays_Click(object sender, RoutedEventArgs e)
+        {
+            var panel = SemesterTabs.SelectedIndex == 0 ? DayCheckboxesSem1 : DayCheckboxesSem2;
+            foreach (var child in panel.Children) if (child is CheckBox cb) cb.IsChecked = false;
+        }
+
         private void AddBlock_Click(object sender, RoutedEventArgs e)
         {
             bool isSem1 = SemesterTabs.SelectedIndex == 0;
             
             string startStr = isSem1 ? $"{StartHourComboSem1.Text}:{StartMinComboSem1.Text} {StartAmPmComboSem1.Text}" : $"{StartHourComboSem2.Text}:{StartMinComboSem2.Text} {StartAmPmComboSem2.Text}";
-            string endStr = isSem1 ? $"{EndHourComboSem2.Text}:{EndMinComboSem1.Text} {EndAmPmComboSem1.Text}" : $"{EndHourComboSem2.Text}:{EndMinComboSem2.Text} {EndAmPmComboSem2.Text}";
-
-            // Fallback bindings if XAML name mismatch occurs on EndHourComboSem2/1
-            if (isSem1 && EndHourComboSem1 != null) endStr = $"{EndHourComboSem1.Text}:{EndMinComboSem1.Text} {EndAmPmComboSem1.Text}";
+            string endStr = isSem1 ? $"{EndHourComboSem1.Text}:{EndMinComboSem1.Text} {EndAmPmComboSem1.Text}" : $"{EndHourComboSem2.Text}:{EndMinComboSem2.Text} {EndAmPmComboSem2.Text}";
 
             if (!DateTime.TryParse(startStr, out DateTime startDt) || !DateTime.TryParse(endStr, out DateTime endDt))
             {
@@ -397,6 +489,7 @@ namespace UniversityScheduler.Views
                 target.SchedulePreferencesSem1 = string.Join(";", _timeBlocksSem1.Select(b => b.ValueString));
                 target.PreferredYearLevelsSem1 = string.Join(",", yrs1);
                 target.PreferredCourseCodesSem1 = string.Join(",", _preferredCoursesSem1.Select(c => c.Code));
+                target.AssignedSectionsSem1 = string.Join(",", _assignedSectionsSem1.Select(s => s.Id));
                 target.AssignedRoomIdSem1 = AssignedRoomComboSem1.SelectedValue as int?;
 
                 // Sem 2
@@ -406,6 +499,7 @@ namespace UniversityScheduler.Views
                 target.SchedulePreferencesSem2 = string.Join(";", _timeBlocksSem2.Select(b => b.ValueString));
                 target.PreferredYearLevelsSem2 = string.Join(",", yrs2);
                 target.PreferredCourseCodesSem2 = string.Join(",", _preferredCoursesSem2.Select(c => c.Code));
+                target.AssignedSectionsSem2 = string.Join(",", _assignedSectionsSem2.Select(s => s.Id));
                 target.AssignedRoomIdSem2 = AssignedRoomComboSem2.SelectedValue as int?;
 
                 db.SaveChanges();

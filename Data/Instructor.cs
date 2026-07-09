@@ -38,6 +38,7 @@ namespace UniversityScheduler.Data
         public string SchedulePreferencesSem1 { get; set; } = string.Empty;
         public string PreferredYearLevelsSem1 { get; set; } = string.Empty;
         public string PreferredCourseCodesSem1 { get; set; } = string.Empty;
+        public string AssignedSectionsSem1 { get; set; } = string.Empty;
         public int? AssignedRoomIdSem1 { get; set; }
         public Room? AssignedRoomSem1 { get; set; }
 
@@ -48,6 +49,7 @@ namespace UniversityScheduler.Data
         public string SchedulePreferencesSem2 { get; set; } = string.Empty;
         public string PreferredYearLevelsSem2 { get; set; } = string.Empty;
         public string PreferredCourseCodesSem2 { get; set; } = string.Empty;
+        public string AssignedSectionsSem2 { get; set; } = string.Empty;
         public int? AssignedRoomIdSem2 { get; set; }
         public Room? AssignedRoomSem2 { get; set; }
     }

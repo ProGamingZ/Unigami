@@ -44,15 +44,20 @@
             </Grid>
             
             <StackPanel Margin="0,0,0,15">
-                <TextBlock Text="Recommended Programs (Check all that apply):" Margin="0,0,0,5"/>
+                <TextBlock Text="Recommended Programs:" FontWeight="Bold" Margin="0,0,0,5"/>
                 <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Height="100">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl x:Name="ProgramCheckList">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <CheckBox Content="{Binding Name}" 
                                               IsChecked="{Binding IsSelected}" 
-                                              Margin="10,5" 
+                                              Margin="8,5" 
                                               Foreground="#2C3E50" 
                                               FontSize="13"/>
                                 </DataTemplate>
