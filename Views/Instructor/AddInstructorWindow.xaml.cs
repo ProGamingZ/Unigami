@@ -113,7 +113,7 @@ namespace UniversityScheduler.Views
             {
                 var rooms = db.Rooms.OrderBy(r => r.Name).ToList();
                 AssignedRoomComboSem1.ItemsSource = rooms;
-                AssignedRoomComboSem2.ItemsSource = rooms;
+                AssignedRoomComboSem2.ItemsSource = rooms.ToList();
             }
         }
 
@@ -192,13 +192,15 @@ namespace UniversityScheduler.Views
 
         private void LoadPreferredCourses(string dbString, ObservableCollection<PreferredCourseItem> targetList)
         {
-            if (string.IsNullOrEmpty(dbString)) return;
-            var codes = dbString.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            if (string.IsNullOrWhiteSpace(dbString)) return;
+            
+            // Added .Select(s => s.Trim().ToUpper()) to bulletproof the loading
+            var codes = dbString.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().ToUpper());
             using (var db = new AppDbContext())
             {
                 foreach (var code in codes)
                 {
-                    var c = db.Courses.FirstOrDefault(x => x.Code == code);
+                    var c = db.Courses.FirstOrDefault(x => x.Code.ToUpper() == code);
                     if (c != null) targetList.Add(new PreferredCourseItem { Code = c.Code, DisplayString = c.Name });
                 }
             }
@@ -206,8 +208,13 @@ namespace UniversityScheduler.Views
 
         private void LoadAssignedSections(string dbString, ObservableCollection<AssignedSectionItem> targetList)
         {
-            if (string.IsNullOrEmpty(dbString)) return;
-            var ids = dbString.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+            if (string.IsNullOrWhiteSpace(dbString)) return;
+            
+            // Added .Trim() to prevent FormatExceptions on hidden spaces
+            var ids = dbString.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                              .Select(s => int.TryParse(s.Trim(), out int id) ? id : 0)
+                              .Where(id => id > 0).ToList();
+                              
             using (var db = new AppDbContext())
             {
                 foreach (var id in ids)

@@ -40,6 +40,7 @@ namespace UniversityScheduler.Data
         public string PreferredCourseCodesSem1 { get; set; } = string.Empty;
         public string AssignedSectionsSem1 { get; set; } = string.Empty;
         public int? AssignedRoomIdSem1 { get; set; }
+        [System.ComponentModel.DataAnnotations.Schema.ForeignKey("AssignedRoomIdSem1")]
         public Room? AssignedRoomSem1 { get; set; }
 
         // ================= SEMESTER 2 DATA =================
@@ -51,6 +52,7 @@ namespace UniversityScheduler.Data
         public string PreferredCourseCodesSem2 { get; set; } = string.Empty;
         public string AssignedSectionsSem2 { get; set; } = string.Empty;
         public int? AssignedRoomIdSem2 { get; set; }
+        [System.ComponentModel.DataAnnotations.Schema.ForeignKey("AssignedRoomIdSem2")]
         public Room? AssignedRoomSem2 { get; set; }
     }
 }

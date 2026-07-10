@@ -609,7 +609,7 @@
                                 <ComboBox x:Name="RoomSelector" 
                                         Grid.Column="2" 
                                         Height="30" 
-                                        DisplayMemberPath="FullName" 
+                                        DisplayMemberPath="Name" 
                                         SelectionChanged="RoomSelector_SelectionChanged"/>
                             </Grid>
 

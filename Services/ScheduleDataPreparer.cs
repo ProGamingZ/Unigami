@@ -6,120 +6,122 @@ using UniversityScheduler.Data;
 
 namespace UniversityScheduler.Services
 {
-    public class ScheduleDataPreparer
+    public class ScheduleDataPreparer(AppDbContext db)
     {
-        private readonly AppDbContext _db;
-
-        public ScheduleDataPreparer(AppDbContext db)
-        {
-            _db = db;
-        }
+        private readonly AppDbContext _db = db;
 
         public List<SchedulingTask> GenerateTasks(int semester, Action<string> log)
         {
-            // 1. LOAD SETTINGS
             var settings = SchedulerSettings.Load();
-            var excludedCodes = new HashSet<string>(settings.ExcludedCourses, StringComparer.OrdinalIgnoreCase);
-            var splitExceptions = new HashSet<string>(settings.SplittingExceptions ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
+            var splitExceptions = new HashSet<string>(settings.SplittingExceptions ?? new List<string>(), 
+            StringComparer.OrdinalIgnoreCase);
+            var excludedCodes = new HashSet<string>(settings.ExcludedCourses ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
 
-            log($"Reading active sections... (Block Splitting: {settings.EnableBlockSplitting})");
             var tasks = new List<SchedulingTask>();
+            var allInstructors = _db.Instructors.ToList();
+            var allCourses = _db.Courses.ToList();
+            
+            // 1. Build Whitelist of (SectionId, CourseId)
+            var whitelist = new HashSet<(int SectionId, int CourseId)>();
+
+            foreach (var inst in allInstructors)
+            {
+                // Get Sem-Specific Assignments
+                string sectionIdsStr = semester == 1 ? inst.AssignedSectionsSem1 : inst.AssignedSectionsSem2;
+                string courseCodesStr = semester == 1 ? inst.PreferredCourseCodesSem1 : inst.PreferredCourseCodesSem2;
+
+                // Parse Section IDs (Added Trim)
+                var sectionIds = sectionIdsStr.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                              .Select(s => int.TryParse(s.Trim(), out int id) ? id : 0)
+                                              .Where(id => id > 0);
+                
+                // Parse Course Codes safely (Added Trim and ToUpper to ignore formatting mistakes)
+                var courseCodes = courseCodesStr.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                                .Select(s => s.Trim().ToUpper());
+                
+                var courseIds = allCourses.Where(c => c.Code != null && courseCodes.Contains(c.Code.Trim().ToUpper()))
+                                          .Select(c => c.Id);
+
+                foreach (var secId in sectionIds)
+                {
+                    foreach (var cId in courseIds)
+                    {
+                        whitelist.Add((secId, cId));
+                    }
+                }
+            }
+
+            log($"Filter Created: Scheduling only {whitelist.Count} assigned combinations.");
+
+            // 2. Generate Tasks ONLY for whitelisted items
             var sections = _db.Sections.ToList();
-
-            var lockedAssignments = _db.Schedules
-                .Include(s => s.Instructor)
-                .Where(s => s.Semester == semester && 
-                            s.InstructorId != null && 
-                            s.Instructor!.IsScheduleLocked)
-                .Select(s => new { s.SectionId, s.CourseId })
-                .Distinct()
-                .ToList();
-
-            // Create a fast lookup set
-            var lockedSet = new HashSet<string>(lockedAssignments.Select(x => $"{x.SectionId}_{x.CourseId}"));
-
             foreach (var section in sections)
             {
-                var neededCourses = _db.Curriculums
-                    .Include(c => c.Course)
-                    .Where(c => c.Program == section.Program 
-                                && c.YearLevel == section.YearLevel 
-                                && c.Semester == semester)
-                    .Select(c => c.Course)
-                    .ToList();
+                var currs = _db.Curriculums.Include(c => c.Course)
+                               .Where(c => c.Program == section.Program && 
+                                           c.YearLevel == section.YearLevel && 
+                                           c.Semester == semester).ToList();
 
-                foreach (var course in neededCourses)
+                foreach (var curr in currs)
                 {
-                    if (course == null) continue;
+                    if (curr.Course == null) continue;
+                    if (excludedCodes.Contains(curr.Course.Code)) continue;
 
-                    // --- EXCLUSION LOGIC ---
-                    if (excludedCodes.Contains(course.Code) || 
-                        excludedCodes.Any(ex => course.Code.StartsWith(ex, StringComparison.OrdinalIgnoreCase)))
-                        continue;
-
-                    if (lockedSet.Contains($"{section.Id}_{course.Id}"))
+                    // ONLY generate if this Section/Course combo is assigned to someone
+                    if (whitelist.Contains((section.Id, curr.Course.Id)))
                     {
-                        continue; 
-                    }
-
-                    if (course.Name.Contains("Internship") || course.Code.Contains("OJT")) continue;
-
-                    // --- SPLIT LOGIC CHECK ---
-                    // A course splits ONLY if: Global setting is ON AND Course is NOT an exception.
-                    bool splitLec = settings.EnableBlockSplitting;
-                    bool splitLab = settings.EnableBlockSplitting;
-
-                    // Check exact component exceptions (e.g., "CS101 - Lec")
-                    if (splitExceptions.Contains($"{course.Code} - Lec")) splitLec = false;
-                    if (splitExceptions.Contains($"{course.Code} - Lab")) splitLab = false;
-
-                    // Backwards compatibility: If the old format "CS101" is used, exempt both
-                    if (splitExceptions.Contains(course.Code)) 
-                    {
-                        splitLec = false;
-                        splitLab = false;
-                    }
-
-                    // A. LECTURE COMPONENT
-                    if (course.LectureHours > 0)
-                    {
-                        // If 3 hours AND splitting is allowed -> Create two 1.5hr tasks
-                        if (course.LectureHours == 3 && splitLec) 
+                        // --- LECTURE HANDLING ---
+                        int lecBlocks = curr.Course.LectureHours * 2;
+                        if (lecBlocks > 0)
                         {
-                            var t1 = CreateTask(section, course, "Lec", 3, 1);
-                            var t2 = CreateTask(section, course, "Lec", 3, 2);
-                            t1.RelatedTaskId = t2.TaskId;
-                            t2.RelatedTaskId = t1.TaskId;
-                            tasks.Add(t1);
-                            tasks.Add(t2);
+                            bool isLecExempt = splitExceptions.Contains(curr.Course.Code) || 
+                                               splitExceptions.Contains($"{curr.Course.Code} Lec")||
+                                               splitExceptions.Contains($"{curr.Course.Code} - Lec");
+
+                            if (settings.EnableBlockSplitting && lecBlocks >= 6 && !isLecExempt)
+                            {
+                                int half = lecBlocks / 2;
+                                var t1 = CreateTask(section, curr.Course, "Lecture", half, 1);
+                                var t2 = CreateTask(section, curr.Course, "Lecture", half, 2);
+                                t1.RelatedTaskId = t2.TaskId;
+                                t2.RelatedTaskId = t1.TaskId;
+                                tasks.Add(t1);
+                                tasks.Add(t2);
+                            }
+                            else
+                            {
+                                tasks.Add(CreateTask(section, curr.Course, "Lecture", lecBlocks, 1));
+                            }
                         }
-                        else
-                        {
-                            // Otherwise, keep as one big block (e.g. 6 blocks = 3 hours)
-                            tasks.Add(CreateTask(section, course, "Lec", course.LectureHours * 2, 1));
-                        }
-                    }
 
-                    // B. LAB COMPONENT
-                    if (course.LabHours > 0)
-                    {
-                        // Same logic for Labs (if you want Labs to split too)
-                        if (course.LabHours == 3 && splitLab) 
+                        // --- LAB HANDLING ---
+                        int labBlocks = curr.Course.LabHours * 2;
+                        if (labBlocks > 0)
                         {
-                            var t1 = CreateTask(section, course, "Lab", 3, 1);
-                            var t2 = CreateTask(section, course, "Lab", 3, 2);
-                            t1.RelatedTaskId = t2.TaskId;
-                            t2.RelatedTaskId = t1.TaskId;
-                            tasks.Add(t1);
-                            tasks.Add(t2);
-                        }
-                        else
-                        {
-                            tasks.Add(CreateTask(section, course, "Lab", course.LabHours * 2, 1));
+                            // FIX: Check for base code OR the " Lab" suffix from the UI
+                            bool isLabExempt = splitExceptions.Contains(curr.Course.Code) || 
+                                               splitExceptions.Contains($"{curr.Course.Code} Lab")||
+                                               splitExceptions.Contains($"{curr.Course.Code} - Lab");
+
+                            if (settings.EnableBlockSplitting && labBlocks >= 6 && !isLabExempt)
+                            {
+                                int half = labBlocks / 2;
+                                var t1 = CreateTask(section, curr.Course, "Lab", half, 1);
+                                var t2 = CreateTask(section, curr.Course, "Lab", half, 2);
+                                t1.RelatedTaskId = t2.TaskId;
+                                t2.RelatedTaskId = t1.TaskId;
+                                tasks.Add(t1);
+                                tasks.Add(t2);
+                            }
+                            else
+                            {
+                                tasks.Add(CreateTask(section, curr.Course, "Lab", labBlocks, 1));
+                            }
                         }
                     }
                 }
             }
+            
             log($"Data Prep Complete: Generated {tasks.Count} scheduling tasks.");
             return tasks;
         }

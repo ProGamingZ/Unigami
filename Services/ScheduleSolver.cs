@@ -32,7 +32,7 @@ namespace UniversityScheduler.Services
 
                 // STEP 3: Build the Mathematical Model (Variables)
                 CpModel model = new CpModel();
-                var modelData = CreateModelVariables(model, tasks, rooms, settings, roomRestrictions, blockedSlots, log);
+                var modelData = CreateModelVariables(model, tasks, rooms, instructors, semester, settings, roomRestrictions, blockedSlots, log);
 
                 // STEP 4: Apply Constraints
                 AddOverlapConstraints(model, modelData);
@@ -40,6 +40,8 @@ namespace UniversityScheduler.Services
 
                 // STEP 5: Set Objective (Minimize Bad Schedules)
                 AddObjectiveFunction(model, modelData.Assignments, settings);
+                //Diagnostics before solving
+                RunDiagnostics(tasks, instructors, semester, modelData, log);
 
                 // STEP 6: Execute & Parse
                 return RunSolver(model, modelData.Assignments, semester, settings, log);
@@ -103,7 +105,7 @@ namespace UniversityScheduler.Services
                 }
                 return blocked;
             }
-            private ModelData CreateModelVariables(CpModel model, List<SchedulingTask> tasks, List<Room> rooms, SchedulerSettings settings, Dictionary<int, List<(string Program, int Year)>> roomRestrictions, HashSet<string> blockedSlots, Action<string> log)
+            private ModelData CreateModelVariables(CpModel model, List<SchedulingTask> tasks, List<Room> rooms, List<Instructor> instructors, int semester, SchedulerSettings settings, Dictionary<int, List<(string Program, int Year)>> roomRestrictions, HashSet<string> blockedSlots, Action<string> log)
             {
                 var data = new ModelData();
                 int variableCount = 0;
@@ -117,6 +119,9 @@ namespace UniversityScheduler.Services
                 {
                     int duration = task.Duration30MinBlocks;
                     bool isLab = task.Component == "Lab" || task.Component == "Practicum";
+
+                    // --- NEW: Find assigned instructors for this exact task ---
+                    var assignedInstructors = instructors.Where(i => IsTaskAssignedToInstructor(i, task, semester)).ToList();
 
                     // A. Find Valid Rooms
                     var validRooms = GetValidRooms(task, rooms, roomRestrictions, isLab);
@@ -149,6 +154,23 @@ namespace UniversityScheduler.Services
                                 }
                                 if (isBlocked) continue;
 
+                                // --- NEW: STRICT INSTRUCTOR TIME OVERRIDE ---
+                                // The AI physically cannot generate a class at a time the assigned instructor is not available.
+                                if (assignedInstructors.Count > 0)
+                                {
+                                    bool fitsAnyInstructor = false;
+                                    foreach (var instr in assignedInstructors)
+                                    {
+                                        if (FitsInstructorTimeBlocks(instr, settings, semester, day, slot, duration))
+                                        {
+                                            fitsAnyInstructor = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!fitsAnyInstructor) continue; // Skip generating this illegal time slot!
+                                }
+                                // ---------------------------------------------
+
                                 // Create Variable
                                 var boolVar = model.NewBoolVar($"T{task.TaskId}_R{room.Id}_D{day}_S{slot}");
                                 variableCount++;
@@ -161,6 +183,10 @@ namespace UniversityScheduler.Services
                                 {
                                     AddToMap(data.RoomsAtSlot, (room.Id, day, slot + d), boolVar);
                                     AddToMap(data.SectionsAtSlot, (task.SectionId, day, slot + d), boolVar);
+                                    foreach (var instr in assignedInstructors)
+                                    {
+                                        AddToMap(data.InstructorsAtSlot, (instr.Id, day, slot + d), boolVar);
+                                    }
                                 }
                             }
                         }
@@ -169,7 +195,7 @@ namespace UniversityScheduler.Services
                     // Ensure task is assigned exactly once
                     var taskVars = data.Assignments.Where(a => a.Task == task).Select(a => a.Variable).ToList();
                     if (taskVars.Count > 0) model.AddExactlyOne(taskVars);
-                    else log($"CRITICAL: No valid slots for {task.CourseCode}");
+                    else log($"CRITICAL: No valid slots for {task.CourseCode} - Could be a time conflict with the instructor.");
                 }
 
                 log($"Created {variableCount} variables.");
@@ -179,6 +205,7 @@ namespace UniversityScheduler.Services
             {
                 foreach (var kvp in data.RoomsAtSlot) model.AddAtMostOne(kvp.Value);
                 foreach (var kvp in data.SectionsAtSlot) model.AddAtMostOne(kvp.Value);
+                foreach (var kvp in data.InstructorsAtSlot) model.AddAtMostOne(kvp.Value);
             }
             private void AddSiblingConstraints(CpModel model, List<SchedulingTask> tasks, List<AssignmentVar> assignments, SchedulerSettings settings)
             {
@@ -237,6 +264,7 @@ namespace UniversityScheduler.Services
                 CpSolverStatus status = solver.Solve(model);
                 log($"Solver Status: {status}");
 
+                log($"\n--- INTERNAL SOLVER STATS ---\n{solver.ResponseStats()}\n-----------------------------");
                 var results = new List<ClassSchedule>();
                 if (status == CpSolverStatus.Optimal || status == CpSolverStatus.Feasible)
                 {
@@ -277,6 +305,7 @@ namespace UniversityScheduler.Services
                 public List<AssignmentVar> Assignments { get; set; } = new List<AssignmentVar>();
                 public Dictionary<(int SectionId, int Day, int Slot), List<BoolVar>> SectionsAtSlot { get; set; } = new Dictionary<(int, int, int), List<BoolVar>>();
                 public Dictionary<(int RoomId, int Day, int Slot), List<BoolVar>> RoomsAtSlot { get; set; } = new Dictionary<(int, int, int), List<BoolVar>>();
+                public Dictionary<(int InstructorId, int Day, int Slot), List<BoolVar>> InstructorsAtSlot { get; set; } = new Dictionary<(int, int, int), List<BoolVar>>();
             }
             // These mini-helpers are used in CreateModelVariables
             private List<Room> GetValidRooms(SchedulingTask task, List<Room> rooms, Dictionary<int, List<(string Program, int Year)>> restrictions, bool isLab)
@@ -579,12 +608,22 @@ namespace UniversityScheduler.Services
             // Improved helper for qualification check
             private bool IsInstructorQualified(Instructor instr, ClassSchedule schedule)
             {
-                // Note: You can pass settings.UniversalSubjects here if needed
-                string program = schedule.Semester == 1 ? instr.ProgramSem1 : instr.ProgramSem2;
-                if (string.IsNullOrEmpty(program) || schedule.Section == null) return false;
+                // 1. Get assignments safely
+                string assignedSections = (schedule.Semester == 1 ? instr.AssignedSectionsSem1 : instr.AssignedSectionsSem2) ?? "";
+                string preferredCourses = (schedule.Semester == 1 ? instr.PreferredCourseCodesSem1 : instr.PreferredCourseCodesSem2) ?? "";
 
-                var instructorPrograms = program.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                return instructorPrograms.Contains(schedule.Section.Program);
+                if (string.IsNullOrWhiteSpace(assignedSections) || string.IsNullOrWhiteSpace(preferredCourses) || schedule.Section == null || schedule.Course == null) 
+                    return false;
+
+                // 2. Strict Check: Is this section assigned? (Bulletproof)
+                var sectionIds = assignedSections.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim());
+                if (!sectionIds.Contains(schedule.Section.Id.ToString())) return false;
+
+                // 3. Strict Check: Is this course assigned? (Bulletproof)
+                var courseCodes = preferredCourses.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().ToUpper());
+                if (!courseCodes.Contains(schedule.Course.Code.Trim().ToUpper())) return false;
+
+                return true;
             }
 
         #endregion
@@ -631,7 +670,7 @@ namespace UniversityScheduler.Services
 
             string prefs = cls.Semester == 1 ? instr.SchedulePreferencesSem1 : instr.SchedulePreferencesSem2;
 
-            // 1. Handle "Any" or Empty (Assuming explicit availability if empty, optional)
+            // 1. Handle "Any" or Empty
             if (string.IsNullOrWhiteSpace(prefs)) return true;
 
             var blocks = prefs.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
@@ -641,37 +680,15 @@ namespace UniversityScheduler.Services
                 var parts = block.Split('|');
                 if (parts.Length != 2) continue;
 
-                var days = parts[0].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                
-                // --- 1. Day Check ---
-                // Using "Any" logic or strict list
+                var days = parts[0].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim());
                 if (!days.Contains("Any") && !days.Contains(cls.Day)) continue;
 
                 var timeRange = parts[1].Split('-');
                 if (timeRange.Length != 2) continue;
 
-                // --- 2. Robust Time Parsing (Fixes the AM/PM bug) ---
-                TimeSpan prefStart, prefEnd;
-
-                // Helper function to parse flexible formats
-                bool ParseTime(string raw, out TimeSpan result)
+                // Uses the new global parser to prevent AM/PM bugs
+                if (ParseTimeHelper(timeRange[0], out TimeSpan prefStart) && ParseTimeHelper(timeRange[1], out TimeSpan prefEnd))
                 {
-                    raw = raw.Trim();
-                    // Try standard TimeSpan (e.g. "13:00")
-                    if (TimeSpan.TryParse(raw, out result)) return true;
-                    
-                    // Try DateTime for AM/PM (e.g. "1:00 pm")
-                    if (DateTime.TryParse(raw, out DateTime dt))
-                    {
-                        result = dt.TimeOfDay;
-                        return true;
-                    }
-                    return false;
-                }
-
-                if (ParseTime(timeRange[0], out prefStart) && ParseTime(timeRange[1], out prefEnd))
-                {
-                    // Strict Fit Check: Class must start AFTER pref start AND end BEFORE pref end
                     if (classStart >= prefStart && classEnd <= prefEnd) return true;
                 }
             }
@@ -684,5 +701,216 @@ namespace UniversityScheduler.Services
             return s1 < e2 && s2 < e1;
         }    
     
+
+
+        private bool ParseTimeHelper(string raw, out TimeSpan result)
+        {
+            raw = raw.Trim();
+            if (TimeSpan.TryParse(raw, out result)) return true;
+            if (DateTime.TryParse(raw, out DateTime dt))
+            {
+                result = dt.TimeOfDay;
+                return true;
+            }
+            return false;
+        }
+
+        private bool IsTaskAssignedToInstructor(Instructor instr, SchedulingTask task, int semester)
+        {
+            string assignedSections = (semester == 1 ? instr.AssignedSectionsSem1 : instr.AssignedSectionsSem2) ?? "";
+            string preferredCourses = (semester == 1 ? instr.PreferredCourseCodesSem1 : instr.PreferredCourseCodesSem2) ?? "";
+
+            if (string.IsNullOrWhiteSpace(assignedSections) || string.IsNullOrWhiteSpace(preferredCourses)) return false;
+
+            var sectionIds = assignedSections.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim());
+            if (!sectionIds.Contains(task.SectionId.ToString())) return false;
+
+            var courseCodes = preferredCourses.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().ToUpper());
+            if (!courseCodes.Contains(task.CourseCode.Trim().ToUpper())) return false;
+
+            return true;
+        }
+
+        private bool FitsInstructorTimeBlocks(Instructor instr, SchedulerSettings settings, int semester, int day, int startSlot, int duration)
+        {
+            string prefs = semester == 1 ? instr.SchedulePreferencesSem1 : instr.SchedulePreferencesSem2;
+            if (string.IsNullOrWhiteSpace(prefs)) return true; // Empty means Any Time
+
+            var blocks = prefs.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            string dayStr = GetDayString(day);
+
+            // Convert Slot Indexes to Actual TimeSpans
+            TimeSpan slotStart = new TimeSpan(settings.DayStartHour, 0, 0).Add(TimeSpan.FromMinutes(startSlot * SlotDurationMinutes));
+            TimeSpan slotEnd = slotStart.Add(TimeSpan.FromMinutes(duration * SlotDurationMinutes));
+
+            foreach (var block in blocks)
+            {
+                var parts = block.Split('|');
+                if (parts.Length != 2) continue;
+
+                var prefDays = parts[0].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim());
+                if (!prefDays.Contains("Any") && !prefDays.Contains(dayStr)) continue;
+
+                var timeRange = parts[1].Split('-');
+                if (timeRange.Length != 2) continue;
+
+                if (ParseTimeHelper(timeRange[0], out TimeSpan prefStart) && ParseTimeHelper(timeRange[1], out TimeSpan prefEnd))
+                {
+                    if (slotStart >= prefStart && slotEnd <= prefEnd) return true;
+                }
+            }
+            return false;
+        }
+
+        private void RunDiagnostics(List<SchedulingTask> tasks, List<Instructor> instructors, int semester, ModelData data, Action<string> log)
+        {
+            var settings = SchedulerSettings.Load();
+            log("\n[--- RUNNING MATH DIAGNOSTICS ---]");
+            int criticalErrors = 0;
+
+            // 1. Check for mathematically trapped Instructors
+            foreach (var instr in instructors)
+            {
+                var assignedTasks = tasks.Where(t => IsTaskAssignedToInstructor(instr, t, semester)).ToList();
+                if (assignedTasks.Count == 0) continue;
+
+                int requiredBlocks = assignedTasks.Sum(t => t.Duration30MinBlocks);
+                var assignedTaskIds = assignedTasks.Select(t => t.TaskId).ToList();
+                
+                var availableSlots = data.Assignments
+                    .Where(a => assignedTaskIds.Contains(a.Task.TaskId))
+                    .SelectMany(a => Enumerable.Range(0, a.Task.Duration30MinBlocks).Select(offset => (a.Day, a.StartSlot + offset)))
+                    .Distinct()
+                    .Count();
+
+                // TRAP A: Total Capacity (Infeasible)
+                if (requiredBlocks > availableSlots)
+                {
+                    log($"[CRITICAL] {instr.FullName}: Needs {requiredBlocks} blocks, but availability only allows {availableSlots}.");
+                    criticalErrors++;
+                }
+                // TRAP B: The "Tetris Trap" (Infeasible)
+                // If they have less than 2 hours (4 blocks) of breathing room...
+                else if ((availableSlots - requiredBlocks) <= 4)
+                {
+                    bool hasLabs = assignedTasks.Any(t => t.Component.Contains("Lab") || t.Component.Contains("Practicum"));
+                    bool hasSplits = assignedTasks.Any(t => t.RelatedTaskId != null);
+                    
+                    if (hasLabs && hasSplits && settings.SiblingPattern == "Strict")
+                    {
+                        decimal availHours = availableSlots / 2.0m;
+                        decimal reqHours = requiredBlocks / 2.0m;
+                        decimal bufferHours = availHours - reqHours;
+
+                        log($"[TIME GAP] {instr.FullName}: Tight fit! ({availHours}h avail / {reqHours}h req = {bufferHours}h buffer). '{settings.SiblingPattern}' day spacing creates awkward time gaps that longer classes cannot fit into. Fix: Set Day Spacing to 'None' or expand availability.");
+                        // We don't increment criticalErrors here, because the AI *might* miraculously find a fit, but we warn the user!
+                    }
+                }
+
+                // TRAP C: The Max Units Trap (Results in TBAs)
+                int maxUnits = semester == 1 ? instr.MaxUnitsSem1 : instr.MaxUnitsSem2;
+                
+                if (maxUnits <= 0)
+                {
+                    log($"[OVERLOAD] {instr.FullName}: Max Units is 0! All assigned classes will drop to TBA.");
+                }
+                else
+                {
+                    // Rough estimate: 1 Unit is usually roughly 1 hour (2 blocks) of teaching time.
+                    // If they are assigned 40 blocks (20 hours), but their max units is only 15, warn the user.
+                    int estimatedAssignedUnits = requiredBlocks / 2; 
+                    if (estimatedAssignedUnits > maxUnits)
+                    {
+                        log($"[OVERLOAD] {instr.FullName}: Assigned ~{estimatedAssignedUnits} units, but max is {maxUnits}. Excess classes will drop to TBA.");
+                    }
+                }
+            }
+
+            // 2. Check for mathematically trapped Rooms (Global Capacity Check)
+            int totalLabBlocksRequired = tasks.Where(t => t.Component == "Lab" || t.Component == "Practicum").Sum(t => t.Duration30MinBlocks);
+            int totalLecBlocksRequired = tasks.Where(t => t.Component != "Lab" && t.Component != "Practicum").Sum(t => t.Duration30MinBlocks);
+
+            int totalLabRoomCapacity = 0;
+            int totalLecRoomCapacity = 0;
+
+            var roomGroups = data.Assignments.GroupBy(a => a.Room);
+            foreach (var rg in roomGroups)
+            {
+                int roomCapacity = rg.SelectMany(a => Enumerable.Range(0, a.Task.Duration30MinBlocks).Select(offset => (a.Day, a.StartSlot + offset))).Distinct().Count();
+
+                if (rg.Key.Type.Contains("Laboratory") || rg.Key.Type == "Lab") 
+                    totalLabRoomCapacity += roomCapacity;
+                else 
+                    totalLecRoomCapacity += roomCapacity;
+            }
+
+            if (totalLabBlocksRequired > totalLabRoomCapacity)
+            {
+                log($"[CRITICAL] Labs: Campus needs {totalLabBlocksRequired} blocks, but rooms only have {totalLabRoomCapacity} available.");
+                criticalErrors++;
+            }
+            if (totalLecBlocksRequired > totalLecRoomCapacity)
+            {
+                log($"[CRITICAL] Lectures: Campus needs {totalLecBlocksRequired} blocks, but rooms only have {totalLecRoomCapacity} available.");
+                criticalErrors++;
+            }
+
+            // 3. Check for "Day Spacing" (Sibling) Traps
+            if (settings.EnableBlockSplitting && (settings.SiblingPattern == "Strict" || settings.SiblingPattern == "Relaxed"))
+            {
+                foreach (var instr in instructors)
+                {
+                    var assignedTasks = tasks.Where(t => IsTaskAssignedToInstructor(instr, t, semester)).ToList();
+                    var splitTasks = assignedTasks.Where(t => t.RelatedTaskId != null).ToList();
+
+                    if (splitTasks.Count > 0)
+                    {
+                        var assignedTaskIds = assignedTasks.Select(t => t.TaskId).ToList();
+                        
+                        // Look at the actual days the AI is allowed to schedule this instructor
+                        var availableDays = data.Assignments
+                            .Where(a => assignedTaskIds.Contains(a.Task.TaskId))
+                            .Select(a => a.Day)
+                            .Distinct()
+                            .ToList();
+
+                        bool hasValidPair = false;
+                        if (settings.SiblingPattern == "Strict")
+                        {
+                            if ((availableDays.Contains(0) && availableDays.Contains(3)) || // Mon/Thu
+                                (availableDays.Contains(1) && availableDays.Contains(4)) || // Tue/Fri
+                                (availableDays.Contains(2) && availableDays.Contains(5)))   // Wed/Sat
+                            {
+                                hasValidPair = true;
+                            }
+                        }
+                        else if (settings.SiblingPattern == "Relaxed")
+                        {
+                            foreach (int d1 in availableDays)
+                            {
+                                foreach (int d2 in availableDays)
+                                {
+                                    if (Math.Abs(d1 - d2) >= 2) hasValidPair = true;
+                                }
+                            }
+                        }
+
+                        if (!hasValidPair)
+                        {
+                            string dayNames = availableDays.Count > 0 ? string.Join(", ", availableDays.Select(d => GetDayString(d))) : "None";
+                            log($"[DAY SPACING TRAP] {instr.FullName} has a split class, but their available days ({dayNames}) cannot support '{settings.SiblingPattern}' spacing! Change to 'None' mode or give them matching days.");
+                            criticalErrors++;
+                        }
+                    }
+                }
+            }
+
+
+            if (criticalErrors == 0) 
+                log("Diagnostics Passed: No basic capacity traps found. (If it still fails, check Day Spacing).");
+            else 
+                log($"Diagnostics Failed: Found {criticalErrors} impossible rules. Fix the instructor/room limits in the UI.");
+            log("[--------------------------------]\n");
+        }
     }  
 }
