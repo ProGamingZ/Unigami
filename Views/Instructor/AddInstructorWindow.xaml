@@ -63,6 +63,9 @@
                         <TextBox x:Name="DoctorTxt" Height="25" Margin="0,2,0,5"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                        <TextBlock Text="Admin Designation / Special Assignment:" FontSize="11" Foreground="Gray"/>
+                        <TextBox x:Name="AdminDesignationTxt" Height="25" Margin="0,2,0,10"/>
+
                         <TextBlock Text="Teaching Exp (Public Years):" FontSize="11" Foreground="Gray"/>
                         <TextBox x:Name="ExpPublicTxt" Height="25" Text="0" Margin="0,2,0,5"/>
                         <TextBlock Text="Teaching Exp (Private Years):" FontSize="11" Foreground="Gray"/>

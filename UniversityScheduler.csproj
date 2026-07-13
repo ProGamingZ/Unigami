@@ -24,15 +24,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Templates\TEACHING LOAD TEMPLATE.xlsx">
+    <None Update="Templates\TeachingLoad_Regular.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Templates\TeachingLoad_Overload.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
-  <!-- <ItemGroup>
+  <ItemGroup>
     <Content Include="schedule.db">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-  </ItemGroup> -->
+  </ItemGroup>
 </Project>

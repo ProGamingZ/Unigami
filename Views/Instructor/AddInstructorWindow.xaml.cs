@@ -84,6 +84,7 @@ namespace UniversityScheduler.Views
             DoctorTxt.Text = instructorToEdit.DoctoralDegree;
             ExpPublicTxt.Text = instructorToEdit.ExperiencePublic.ToString();
             ExpPrivateTxt.Text = instructorToEdit.ExperiencePrivate.ToString();
+            AdminDesignationTxt.Text = instructorToEdit.AdministrativeDesignation;
 
             // 2. Load Semester 1 Data
             LoadSemesterData(1, instructorToEdit);
@@ -488,6 +489,7 @@ namespace UniversityScheduler.Views
                 target.DoctoralDegree = DoctorTxt.Text;
                 target.ExperiencePublic = int.TryParse(ExpPublicTxt.Text, out int ep) ? ep : 0;
                 target.ExperiencePrivate = int.TryParse(ExpPrivateTxt.Text, out int epr) ? epr : 0;
+                target.AdministrativeDesignation = AdminDesignationTxt.Text.Trim();
 
                 // Sem 1
                 target.StatusSem1 = (StatusComboSem1.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time";

@@ -105,5 +105,12 @@ namespace UniversityScheduler.Views
             }
         }
         
+        private void OpenExportSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var exportWin = new ExportSettingsWindow();
+            exportWin.Owner = this;
+            exportWin.ShowDialog();
+        }
+        
     }
 }

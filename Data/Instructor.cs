@@ -27,6 +27,7 @@ namespace UniversityScheduler.Data
         public string BaccalaureateDegree { get; set; } = string.Empty;
         public string MastersDegree { get; set; } = string.Empty;
         public string DoctoralDegree { get; set; } = string.Empty;
+        public string AdministrativeDesignation { get; set; } = string.Empty;
         public int ExperiencePublic { get; set; } = 0;
         public int ExperiencePrivate { get; set; } = 0;
         public bool IsScheduleLocked { get; set; } = false;

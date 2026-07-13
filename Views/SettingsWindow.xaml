@@ -6,67 +6,75 @@
         MinHeight="300" MinWidth="300"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip"
         Icon="/UNIGAMIicon128.ico">
-    
-    <Border Padding="20" Background="#F7F9F9">
-        <StackPanel>
-            <TextBlock Text="Window Settings" FontSize="18" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
-            
-            <GroupBox Header="Always on Top Configuration" Padding="10">
-                <StackPanel>
-                    <TextBlock Text="Select windows to keep on top:" Foreground="Gray" Margin="0,0,0,10"/>
-                    
-                    <CheckBox x:Name="CbInstructors" Content="Instructors Window" Margin="0,5"/>
-                    <CheckBox x:Name="CbCourses" Content="Courses Window" Margin="0,5"/>
-                    <CheckBox x:Name="CbClasses" Content="Classes Window" Margin="0,5"/>
-                    <CheckBox x:Name="CbRooms" Content="Rooms Window" Margin="0,5"/>
-                    <CheckBox x:Name="CbStats" Content="Stats Window" Margin="0,5"/>
-                    <CheckBox x:Name="CbGenerate" Content="Generate Window" Margin="0,5"/>
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <Border Padding="20" Background="#F7F9F9">
+            <StackPanel>
+                <TextBlock Text="Window Settings" FontSize="18" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                
+                <GroupBox Header="Always on Top Configuration" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="Select windows to keep on top:" Foreground="Gray" Margin="0,0,0,10"/>
+                        
+                        <CheckBox x:Name="CbInstructors" Content="Instructors Window" Margin="0,5"/>
+                        <CheckBox x:Name="CbCourses" Content="Courses Window" Margin="0,5"/>
+                        <CheckBox x:Name="CbClasses" Content="Classes Window" Margin="0,5"/>
+                        <CheckBox x:Name="CbRooms" Content="Rooms Window" Margin="0,5"/>
+                        <CheckBox x:Name="CbStats" Content="Stats Window" Margin="0,5"/>
+                        <CheckBox x:Name="CbGenerate" Content="Generate Window" Margin="0,5"/>
 
-                    <TextBlock Text="Schedule Time Range:" Foreground="Gray" Margin="0,15,0,5" FontWeight="Bold"/>
-                        <Grid Margin="0,5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="10"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <TextBlock Text="Schedule Time Range:" Foreground="Gray" Margin="0,15,0,5" FontWeight="Bold"/>
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Start Time:" FontSize="11" Foreground="#7F8C8D"/>
-                                <ComboBox x:Name="ComboStartTime" Height="30" Margin="0,2,0,0">
-                                    <ComboBoxItem Content="6:00 AM" Tag="6"/>
-                                    <ComboBoxItem Content="7:00 AM" Tag="7"/>
-                                    <ComboBoxItem Content="8:00 AM" Tag="8"/>
-                                </ComboBox>
-                            </StackPanel>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Start Time:" FontSize="11" Foreground="#7F8C8D"/>
+                                    <ComboBox x:Name="ComboStartTime" Height="30" Margin="0,2,0,0">
+                                        <ComboBoxItem Content="6:00 AM" Tag="6"/>
+                                        <ComboBoxItem Content="7:00 AM" Tag="7"/>
+                                        <ComboBoxItem Content="8:00 AM" Tag="8"/>
+                                    </ComboBox>
+                                </StackPanel>
 
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="End Time:" FontSize="11" Foreground="#7F8C8D"/>
-                                <ComboBox x:Name="ComboEndTime" Height="30" Margin="0,2,0,0">
-                                    <ComboBoxItem Content="7:00 PM" Tag="19"/>
-                                    <ComboBoxItem Content="8:00 PM" Tag="20"/>
-                                    <ComboBoxItem Content="9:00 PM" Tag="21"/>
-                                </ComboBox>
-                            </StackPanel>
-                        </Grid>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="End Time:" FontSize="11" Foreground="#7F8C8D"/>
+                                    <ComboBox x:Name="ComboEndTime" Height="30" Margin="0,2,0,0">
+                                        <ComboBoxItem Content="7:00 PM" Tag="19"/>
+                                        <ComboBoxItem Content="8:00 PM" Tag="20"/>
+                                        <ComboBoxItem Content="9:00 PM" Tag="21"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
 
-                </StackPanel>
-            </GroupBox>
-            <GroupBox Header="Database Management" Padding="10" Margin="0,15,0,0">
-                <StackPanel>
-                    <TextBlock Text="Migrate an older schedule.db file to this new version without losing your data." Foreground="Gray" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                    
-                    <Button Content="Import Old Database (.db)" 
-                            Style="{StaticResource MasterSchedButtonStyle}" 
-                            Click="ImportDb_Click"/>
-                </StackPanel>
-            </GroupBox>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Header="Database Management" Padding="10" Margin="0,15,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Migrate an older schedule.db file to this new version without losing your data." Foreground="Gray" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                        
+                        <Button Content="Import Old Database (.db)" 
+                                Style="{StaticResource MasterSchedButtonStyle}" 
+                                Click="ImportDb_Click"/>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Header="Export Formatting" Padding="10" Margin="0,15,0,15">
+                    <StackPanel>
+                        <TextBlock Text="Configure the signatories, dates, and math formulas injected into the Excel Teaching Load reports." Foreground="Gray" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                        <Button Content="⚙️ Configure Excel Template Data" 
+                                Style="{StaticResource MasterSchedButtonStyle}" 
+                                Click="OpenExportSettings_Click"/>
+                    </StackPanel>
+                </GroupBox>
 
-            
-
-            <Button Content="Save &amp; Close" 
-                    Style="{StaticResource MasterSchedButtonStyle}" 
-                    Click="Save_Click"/>
-            
-        </StackPanel>
-    </Border>
+                <Button Content="Save &amp; Close" 
+                        Style="{StaticResource MasterSchedButtonStyle}" 
+                        Click="Save_Click"/>
+                
+            </StackPanel>
+        </Border>
+    </ScrollViewer>
 </Window>
