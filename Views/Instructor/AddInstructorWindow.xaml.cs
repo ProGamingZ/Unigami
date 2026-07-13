@@ -24,8 +24,10 @@ namespace UniversityScheduler.Views
     public class PreferredCourseItem
     {
         public string Code { get; set; } = string.Empty;
+        public string Component { get; set; } = string.Empty;
         public string DisplayString { get; set; } = string.Empty;
-        public string FullDisplay => $"{Code} - {DisplayString}";
+        public string FullDisplay => $"{Code}({Component}) - {DisplayString}";
+        public string SaveCode => $"{Code}-{Component}";
     }
 
     public class AssignedSectionItem
@@ -195,14 +197,22 @@ namespace UniversityScheduler.Views
         {
             if (string.IsNullOrWhiteSpace(dbString)) return;
             
-            // Added .Select(s => s.Trim().ToUpper()) to bulletproof the loading
-            var codes = dbString.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().ToUpper());
+            var items = dbString.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().ToUpper());
             using (var db = new AppDbContext())
             {
-                foreach (var code in codes)
+                foreach (var item in items)
                 {
+                    // Split "IT303-LAB" into Code and Component
+                    var parts = item.Split('-');
+                    string code = parts[0];
+                    string comp = parts.Length > 1 ? parts[1] : "LEC"; // Legacy fallback
+
                     var c = db.Courses.FirstOrDefault(x => x.Code.ToUpper() == code);
-                    if (c != null) targetList.Add(new PreferredCourseItem { Code = c.Code, DisplayString = c.Name });
+                    if (c != null) 
+                    {
+                        string properComp = comp == "LAB" ? "Lab" : "Lec";
+                        targetList.Add(new PreferredCourseItem { Code = c.Code, Component = properComp, DisplayString = c.Name });
+                    }
                 }
             }
         }
@@ -347,7 +357,19 @@ namespace UniversityScheduler.Views
                     .Where(c => c != null)
                     .ToList();
 
-                _allDatabaseCourses = validCourses.Select(c => new PreferredCourseItem { Code = c!.Code, DisplayString = c.Name }).OrderBy(c => c.Code).ToList();
+                _allDatabaseCourses.Clear();
+                foreach (var c in validCourses)
+                {
+                    // Add Lecture if it exists
+                    if (c!.LectureHours > 0)
+                        _allDatabaseCourses.Add(new PreferredCourseItem { Code = c.Code, Component = "Lec", DisplayString = c.Name });
+                    
+                    // Add Lab if it exists
+                    if (c.LabHours > 0)
+                        _allDatabaseCourses.Add(new PreferredCourseItem { Code = c.Code, Component = "Lab", DisplayString = c.Name });
+                }
+
+                _allDatabaseCourses = _allDatabaseCourses.OrderBy(c => c.Code).ThenBy(c => c.Component).ToList();
 
                 if (isSem1) PreferredCourseComboSem1.ItemsSource = _allDatabaseCourses;
                 else PreferredCourseComboSem2.ItemsSource = _allDatabaseCourses;
@@ -364,7 +386,8 @@ namespace UniversityScheduler.Views
 
             if (combo.SelectedItem is PreferredCourseItem selectedCourse)
             {
-                if (targetList.Any(c => c.Code == selectedCourse.Code)) { MessageBox.Show("Course already added."); return; }
+                if (targetList.Any(c => c.SaveCode == selectedCourse.SaveCode)) 
+                { MessageBox.Show("This specific component is already added."); return; }
                 targetList.Add(selectedCourse);
                 combo.SelectedItem = null;
                 combo.Text = "";
@@ -497,7 +520,7 @@ namespace UniversityScheduler.Views
                 target.ProgramSem1 = string.Join(", ", progs1);
                 target.SchedulePreferencesSem1 = string.Join(";", _timeBlocksSem1.Select(b => b.ValueString));
                 target.PreferredYearLevelsSem1 = string.Join(",", yrs1);
-                target.PreferredCourseCodesSem1 = string.Join(",", _preferredCoursesSem1.Select(c => c.Code));
+                target.PreferredCourseCodesSem1 = string.Join(",", _preferredCoursesSem1.Select(c => c.SaveCode));
                 target.AssignedSectionsSem1 = string.Join(",", _assignedSectionsSem1.Select(s => s.Id));
                 target.AssignedRoomIdSem1 = AssignedRoomComboSem1.SelectedValue as int?;
 
@@ -507,7 +530,7 @@ namespace UniversityScheduler.Views
                 target.ProgramSem2 = string.Join(", ", progs2);
                 target.SchedulePreferencesSem2 = string.Join(";", _timeBlocksSem2.Select(b => b.ValueString));
                 target.PreferredYearLevelsSem2 = string.Join(",", yrs2);
-                target.PreferredCourseCodesSem2 = string.Join(",", _preferredCoursesSem2.Select(c => c.Code));
+                target.PreferredCourseCodesSem2 = string.Join(",", _preferredCoursesSem2.Select(c => c.SaveCode));
                 target.AssignedSectionsSem2 = string.Join(",", _assignedSectionsSem2.Select(s => s.Id));
                 target.AssignedRoomIdSem2 = AssignedRoomComboSem2.SelectedValue as int?;
 

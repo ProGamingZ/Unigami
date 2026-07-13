@@ -22,35 +22,29 @@ namespace UniversityScheduler.Services
             var allCourses = _db.Courses.ToList();
             
             // 1. Build Whitelist of (SectionId, CourseId)
-            var whitelist = new HashSet<(int SectionId, int CourseId)>();
+            var whitelist = new HashSet<(int SectionId, string SaveCode)>();
 
             foreach (var inst in allInstructors)
             {
-                // Get Sem-Specific Assignments
                 string sectionIdsStr = semester == 1 ? inst.AssignedSectionsSem1 : inst.AssignedSectionsSem2;
                 string courseCodesStr = semester == 1 ? inst.PreferredCourseCodesSem1 : inst.PreferredCourseCodesSem2;
 
-                // Parse Section IDs (Added Trim)
                 var sectionIds = sectionIdsStr.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                               .Select(s => int.TryParse(s.Trim(), out int id) ? id : 0)
                                               .Where(id => id > 0);
                 
-                // Parse Course Codes safely (Added Trim and ToUpper to ignore formatting mistakes)
                 var courseCodes = courseCodesStr.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                                 .Select(s => s.Trim().ToUpper());
                 
-                var courseIds = allCourses.Where(c => c.Code != null && courseCodes.Contains(c.Code.Trim().ToUpper()))
-                                          .Select(c => c.Id);
-
+                // Directly whitelist the Code-Component string (e.g. IT303-LEC)
                 foreach (var secId in sectionIds)
                 {
-                    foreach (var cId in courseIds)
+                    foreach (var code in courseCodes)
                     {
-                        whitelist.Add((secId, cId));
+                        whitelist.Add((secId, code));
                     }
                 }
             }
-
             log($"Filter Created: Scheduling only {whitelist.Count} assigned combinations.");
 
             // 2. Generate Tasks ONLY for whitelisted items
@@ -67,10 +61,12 @@ namespace UniversityScheduler.Services
                     if (curr.Course == null) continue;
                     if (excludedCodes.Contains(curr.Course.Code)) continue;
 
-                    // ONLY generate if this Section/Course combo is assigned to someone
-                    if (whitelist.Contains((section.Id, curr.Course.Id)))
+                    string baseCode = curr.Course.Code.Trim().ToUpper();
+
+                    // --- LECTURE HANDLING ---
+                    // Explicitly check if the instructor was assigned the "-LEC" portion
+                    if (whitelist.Contains((section.Id, $"{baseCode}-LEC")))
                     {
-                        // --- LECTURE HANDLING ---
                         int lecBlocks = curr.Course.LectureHours * 2;
                         if (lecBlocks > 0)
                         {
@@ -93,12 +89,15 @@ namespace UniversityScheduler.Services
                                 tasks.Add(CreateTask(section, curr.Course, "Lecture", lecBlocks, 1));
                             }
                         }
+                    }
 
-                        // --- LAB HANDLING ---
+                    // --- LAB HANDLING ---
+                    // Explicitly check if the instructor was assigned the "-LAB" portion
+                    if (whitelist.Contains((section.Id, $"{baseCode}-LAB")))
+                    {
                         int labBlocks = curr.Course.LabHours * 2;
                         if (labBlocks > 0)
                         {
-                            // FIX: Check for base code OR the " Lab" suffix from the UI
                             bool isLabExempt = splitExceptions.Contains(curr.Course.Code) || 
                                                splitExceptions.Contains($"{curr.Course.Code} Lab")||
                                                splitExceptions.Contains($"{curr.Course.Code} - Lab");
