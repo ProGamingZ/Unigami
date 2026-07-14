@@ -8,8 +8,36 @@ namespace UniversityScheduler.Services
 {
    public partial class ScheduleSolver
    {
-      private List<Room> GetValidRooms(SchedulingTask task, List<Room> rooms, Dictionary<int, List<(string Program, int Year)>> restrictions, bool isLab)
+      private List<Room> GetValidRooms(SchedulingTask task, List<Room> rooms, Dictionary<int, List<(string Program, int Year)>> restrictions, bool isLab, List<Instructor> assignedInstructors, int semester)
       {
+         // 1. MAGNET LOGIC: If this is a LECTURE, force it into the assigned instructor's Homeroom
+         if (assignedInstructors.Count > 0)
+         {
+            var homeroomInstr = assignedInstructors.FirstOrDefault(i => (semester == 1 ? i.AssignedRoomIdSem1 : i.AssignedRoomIdSem2) != null);
+            
+            if (homeroomInstr != null)
+            {
+               int homeroomId = (semester == 1 ? homeroomInstr.AssignedRoomIdSem1 : homeroomInstr.AssignedRoomIdSem2).Value;
+               
+               // Find the room, ensure it's big enough
+               var homeroom = rooms.FirstOrDefault(r => r.Id == homeroomId && r.Capacity >= task.StudentCount);
+               
+               if (homeroom != null)
+               {
+                  bool roomIsLab = homeroom.Type.Contains("Lab") || homeroom.Type.Contains("Laboratory");
+                  
+                  // Match the class type to the room type!
+                  // If it's a Lab class, the homeroom MUST be a Lab.
+                  // If it's a Lec class, the homeroom MUST NOT be a Lab.
+                  if ((isLab && roomIsLab) || (!isLab && !roomIsLab))
+                  {
+                     return new List<Room> { homeroom };
+                  }
+               }
+            }
+         }
+
+         // 2. STANDARD LOGIC: (For Labs, TBA instructors, or if the homeroom is too small)
          var filtered = rooms.Where(r => 
          {
             if (r.Capacity < task.StudentCount) return false;

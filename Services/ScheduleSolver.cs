@@ -35,6 +35,7 @@ namespace UniversityScheduler.Services
             // STEP 4: Apply Constraints
             AddOverlapConstraints(model, modelData);
             AddSiblingConstraints(model, tasks, modelData, settings);
+            AddLecBeforeLabConstraints(model, tasks, modelData);
 
             // STEP 5: Apply Symmetry Breaking (Speed Optimization)
             AddRoomSymmetryBreaking(model, modelData.Assignments, rooms, log);
@@ -59,7 +60,7 @@ namespace UniversityScheduler.Services
                 string status = semester == 1 ? instr.StatusSem1 : instr.StatusSem2;
                 int? assignedRoomId = semester == 1 ? instr.AssignedRoomIdSem1 : instr.AssignedRoomIdSem2;
 
-                if (!string.Equals(status, "Full-Time", StringComparison.OrdinalIgnoreCase) || assignedRoomId == null) 
+                if (assignedRoomId == null) 
                     continue;
 
                 int roomId = assignedRoomId.Value;
@@ -162,7 +163,7 @@ namespace UniversityScheduler.Services
                 var assignedInstructors = instructors.Where(i => IsTaskAssignedToInstructor(i, task, semester)).ToList();
 
                 // A. Find Valid Rooms
-                var validRooms = GetValidRooms(task, rooms, roomRestrictions, isLab);
+                var validRooms = GetValidRooms(task, rooms, roomRestrictions, isLab, assignedInstructors, semester);
                 if (!validRooms.Any())
                 {
                     log($"WARNING: Task {task.TaskId} ({task.CourseCode}) has no valid rooms.");
@@ -290,6 +291,49 @@ namespace UniversityScheduler.Services
             }
         }
         
+        private void AddLecBeforeLabConstraints(CpModel model, List<SchedulingTask> tasks, ModelData data)
+        {
+            var assignments = data.Assignments;
+            
+            // Group the tasks by Section and Course
+            var courseGroups = tasks.GroupBy(t => new { t.SectionId, t.CourseId });
+
+            foreach (var group in courseGroups)
+            {
+                // Separate into Lec and Lab, and sort them chronologically by Session Number
+                var lecTasks = group.Where(t => !t.Component.Contains("Lab") && !t.Component.Contains("Practicum"))
+                                    .OrderBy(t => t.SessionNumber).ToList();
+                                    
+                var labTasks = group.Where(t => t.Component.Contains("Lab") || t.Component.Contains("Practicum"))
+                                    .OrderBy(t => t.SessionNumber).ToList();
+
+                // Match them up (e.g. Lec 1 precedes Lab 1. Lec 2 precedes Lab 2).
+                int pairsToConstrain = Math.Min(lecTasks.Count, labTasks.Count);
+
+                for (int i = 0; i < pairsToConstrain; i++)
+                {
+                var lec = lecTasks[i];
+                var lab = labTasks[i];
+
+                var lecVars = assignments.Where(a => a.Task == lec).ToList();
+                var labVars = assignments.Where(a => a.Task == lab).ToList();
+
+                if (lecVars.Count > 0 && labVars.Count > 0)
+                {
+                    // 1. Calculate Absolute Time Formula: (Day * 100) + StartSlot
+                    // Example: Monday (0) Slot 10 = 10. 
+                    // Example: Tuesday (1) Slot 5 = 105. 
+                    // Because slots never exceed 30 per day, days will never overlap!
+                    var lecAbsTime = LinearExpr.Sum(lecVars.Select(a => a.Variable * ((a.Day * 100) + a.StartSlot)));
+                    var labAbsTime = LinearExpr.Sum(labVars.Select(a => a.Variable * ((a.Day * 100) + a.StartSlot)));
+
+                    // 2. Enforce Chronology: Lab absolute time MUST be >= (Lec absolute time + Lec duration)
+                    model.Add(labAbsTime >= lecAbsTime + lec.Duration30MinBlocks);
+                }
+                }
+            }
+        }
+
         private List<ClassSchedule> RunSolver(CpModel model, ModelData modelData, int semester, SchedulerSettings settings, Action<string> log)
         {
             log("Starting Solver...");
