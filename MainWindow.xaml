@@ -193,12 +193,31 @@
                                     </Grid>
 
                                     <Grid Grid.Row="4">
-                                        <ComboBox x:Name="VacancyInstProgramCombo" SelectionChanged="InstFilter_Changed" FontSize="13">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="5"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <ComboBox x:Name="VacancyInstProgramCombo" Grid.Column="0" SelectionChanged="InstFilter_Changed" FontSize="13">
                                             <ComboBoxItem Content="All Programs" Tag="All" IsSelected="True"/>
                                             <ComboBoxItem Content="BSCS" Tag="BSCS"/>
                                             <ComboBoxItem Content="BSIT" Tag="BSIT"/>
                                             <ComboBoxItem Content="BSIS" Tag="BSIS"/>
                                             <ComboBoxItem Content="BSEMC" Tag="BSEMC"/>
+                                        </ComboBox>
+
+                                        <ComboBox x:Name="InstTimeGapCombo" Grid.Column="2" SelectionChanged="InstFilter_Changed" FontSize="13">
+                                            <ComboBoxItem Content="Gap: 30 mins" Tag="30"/>
+                                            <ComboBoxItem Content="Gap: 60 mins" Tag="60"/>
+                                            <ComboBoxItem Content="Gap: 90 mins" Tag="90" IsSelected="True"/>
+                                            <ComboBoxItem Content="Gap: 120 mins" Tag="120"/>
+                                            <ComboBoxItem Content="Gap: 150 mins" Tag="150"/>
+                                            <ComboBoxItem Content="Gap: 180 mins" Tag="180"/>
+                                            <ComboBoxItem Content="Gap: 210 mins" Tag="210"/>
+                                            <ComboBoxItem Content="Gap: 240 mins" Tag="240"/>
+                                            <ComboBoxItem Content="Gap: 270 mins" Tag="270"/>
+                                            <ComboBoxItem Content="Gap: 300 mins" Tag="300"/>
                                         </ComboBox>
                                     </Grid>
                                 </Grid>
@@ -326,12 +345,31 @@
                                     </Grid>
 
                                     <Grid Grid.Row="4">
-                                        <ComboBox x:Name="VacancyRoomFloorCombo" SelectionChanged="RoomFilter_Changed" FontSize="13">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="5"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <ComboBox x:Name="VacancyRoomFloorCombo" Grid.Column="0" SelectionChanged="RoomFilter_Changed" FontSize="13">
                                             <ComboBoxItem Content="All Floors" Tag="All" IsSelected="True"/>
                                             <ComboBoxItem Content="1st Floor" Tag="1"/>
                                             <ComboBoxItem Content="2nd Floor" Tag="2"/>
                                             <ComboBoxItem Content="3rd Floor" Tag="3"/>
                                             <ComboBoxItem Content="4th Floor" Tag="4"/>
+                                        </ComboBox>
+
+                                        <ComboBox x:Name="RoomTimeGapCombo" Grid.Column="2" SelectionChanged="RoomFilter_Changed" FontSize="13">
+                                            <ComboBoxItem Content="Gap: 30 mins" Tag="30"/>
+                                            <ComboBoxItem Content="Gap: 60 mins" Tag="60"/>
+                                            <ComboBoxItem Content="Gap: 90 mins" Tag="90" IsSelected="True"/>
+                                            <ComboBoxItem Content="Gap: 120 mins" Tag="120"/>
+                                            <ComboBoxItem Content="Gap: 150 mins" Tag="150"/>
+                                            <ComboBoxItem Content="Gap: 180 mins" Tag="180"/>
+                                            <ComboBoxItem Content="Gap: 210 mins" Tag="210"/>
+                                            <ComboBoxItem Content="Gap: 240 mins" Tag="240"/>
+                                            <ComboBoxItem Content="Gap: 270 mins" Tag="270"/>
+                                            <ComboBoxItem Content="Gap: 300 mins" Tag="300"/>
                                         </ComboBox>
                                     </Grid>
                                 </Grid>

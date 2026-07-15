@@ -12,6 +12,31 @@ namespace UniversityScheduler
    {
       public List<string> VacancyTimeSlots { get; set; } = new List<string>();
 
+      private bool HasAvailableGap(TimeSpan windowStart, TimeSpan windowEnd, IEnumerable<ClassSchedule> schedules, int targetGapMinutes)
+      {
+         int startMin = (int)windowStart.TotalMinutes;
+         int endMin = (int)windowEnd.TotalMinutes;
+         // Get all conflicting schedules and constrain them to within the requested "Net" window
+         var intervals = schedules
+            .Select(s => new {
+               Start = Math.Max(startMin, (int)ParseTime(s.StartTime).TotalMinutes),
+               End = Math.Min(endMin, (int)ParseTime(s.EndTime).TotalMinutes)
+            })
+            .Where(x => x.Start < x.End)
+            .OrderBy(x => x.Start)
+            .ToList();
+         int currentStart = startMin;
+         foreach (var interval in intervals)
+         {
+            // If the empty space before this schedule hits the target gap, we have a winner
+            if (interval.Start - currentStart >= targetGapMinutes) return true;
+            // Move the scanner forward past this schedule
+            currentStart = Math.Max(currentStart, interval.End);
+         }
+         // Final check: Is the remaining empty space after the last schedule big enough?
+         return (endMin - currentStart) >= targetGapMinutes;
+      }
+
       // Instructor Search
       public System.Collections.ObjectModel.ObservableCollection<VacancyItem> VacantInstructors { get; set; } = [];
       
@@ -86,22 +111,22 @@ namespace UniversityScheduler
       private void CheckInstVacancyComplex()
       {
          VacantInstructors.Clear();
-         
          if (CriteriaList.Count == 0) return; 
 
          string programFilter = (VacancyInstProgramCombo?.SelectedItem as ComboBoxItem)?.Tag.ToString() ?? "All";
+         
+         // Extract the required gap in minutes
+         int targetGap = 90; 
+         if (InstTimeGapCombo?.SelectedItem is ComboBoxItem gapItem && int.TryParse(gapItem.Tag?.ToString(), out int parsedGap))
+             targetGap = parsedGap;
 
          using var db = new UniversityScheduler.Data.AppDbContext();
-         
-         // 1. Get Base Instructors (DYNAMIC SEMESTER FILTER)
-         var query = db.Instructors.AsEnumerable()
-            .Where(i => (_currentSemester == 1 ? i.StatusSem1 : i.StatusSem2) != "Inactive");
+         var query = db.Instructors.AsEnumerable().Where(i => (_currentSemester == 1 ? i.StatusSem1 : i.StatusSem2) != "Inactive");
             
          if (programFilter != "All") 
             query = query.Where(i => ((_currentSemester == 1 ? i.ProgramSem1 : i.ProgramSem2) ?? "").Contains(programFilter));
             
          var candidates = query.ToList();
-
          var schedules = db.Schedules.Where(s => s.Semester == _currentSemester && s.InstructorId != null).ToList();
          var finalMatches = new List<Instructor>();
 
@@ -113,19 +138,18 @@ namespace UniversityScheduler
                   bool isFree = true;
                   foreach (var day in crit.Days)
                   {
-                     bool hasConflict = schedules.Any(s =>
-                        s.InstructorId == inst.Id &&
-                        s.Day == day &&
-                        ParseTime(s.StartTime) < crit.EndTime &&
-                        ParseTime(s.EndTime) > crit.StartTime
-                     );
-                     if (hasConflict) { isFree = false; break; }
+                     // Use the new Time Net logic
+                     var daySchedules = schedules.Where(s => s.InstructorId == inst.Id && s.Day == day);
+                     if (!HasAvailableGap(crit.StartTime, crit.EndTime, daySchedules, targetGap))
+                     {
+                         isFree = false; 
+                         break;
+                     }
                   }
                   criteriaResults.Add(isFree);
                }
 
                bool combinedResult = criteriaResults[0]; 
-
                for (int i = 0; i < criteriaResults.Count - 1; i++)
                {
                   string op = CriteriaList[i].Logic; 
@@ -169,6 +193,7 @@ namespace UniversityScheduler
          }
       }
 
+      
       // Room Search
       public System.Collections.ObjectModel.ObservableCollection<RoomVacancyItem> VacantRooms { get; set; } = [];
       
@@ -243,10 +268,13 @@ namespace UniversityScheduler
       private void CheckRoomVacancyComplex()
       {
          VacantRooms.Clear();
-         
          if (RoomCriteriaList.Count == 0) return;
 
          string floorFilter = (VacancyRoomFloorCombo?.SelectedItem as ComboBoxItem)?.Tag.ToString() ?? "All";
+         
+         int targetGap = 90; 
+         if (RoomTimeGapCombo?.SelectedItem is ComboBoxItem gapItem && int.TryParse(gapItem.Tag?.ToString(), out int parsedGap))
+             targetGap = parsedGap;
 
          using var db = new UniversityScheduler.Data.AppDbContext();
          var query = db.Rooms.AsQueryable();
@@ -267,13 +295,13 @@ namespace UniversityScheduler
                   bool isFree = true;
                   foreach (var day in crit.Days)
                   {
-                     bool hasConflict = schedules.Any(s =>
-                        s.RoomId == room.Id &&
-                        s.Day == day &&
-                        ParseTime(s.StartTime) < crit.EndTime &&
-                        ParseTime(s.EndTime) > crit.StartTime
-                     );
-                     if (hasConflict) { isFree = false; break; }
+                     // Use the new Time Net logic
+                     var daySchedules = schedules.Where(s => s.RoomId == room.Id && s.Day == day);
+                     if (!HasAvailableGap(crit.StartTime, crit.EndTime, daySchedules, targetGap))
+                     {
+                         isFree = false;
+                         break;
+                     }
                   }
                   criteriaResults.Add(isFree);
                }
