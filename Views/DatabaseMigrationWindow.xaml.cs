@@ -263,6 +263,9 @@ namespace UniversityScheduler.Views
                      
                      cmd.CommandText = "DETACH DATABASE OldDb";
                      cmd.ExecuteNonQuery();
+
+                     UpdateStatus(95, "Sanitizing imported instructor subjects...");
+                     SanitizeInstructorCourseCodes(db);
                   }
 
                   Dispatcher.Invoke(() => 
@@ -359,5 +362,42 @@ namespace UniversityScheduler.Views
          public int RowCount { get; set; }
          public string Status { get; set; } = string.Empty;
       }
+   
+
+      private void SanitizeInstructorCourseCodes(AppDbContext db)
+      {
+         var instructors = db.Instructors.ToList();
+         foreach (var inst in instructors)
+         {
+               inst.PreferredCourseCodesSem1 = FormatCourseString(inst.PreferredCourseCodesSem1);
+               inst.PreferredCourseCodesSem2 = FormatCourseString(inst.PreferredCourseCodesSem2);
+         }
+         db.SaveChanges();
+      }
+
+      private string FormatCourseString(string raw)
+      {
+         if (string.IsNullOrWhiteSpace(raw)) return raw;
+         
+         var parts = raw.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim());
+         var formatted = new List<string>();
+         
+         foreach(var p in parts)
+         {
+               // If it already has the new format, leave it alone
+               if (p.EndsWith("-Lec", StringComparison.OrdinalIgnoreCase) || p.EndsWith("-Lab", StringComparison.OrdinalIgnoreCase))
+               {
+                  formatted.Add(p);
+               }
+               else
+               {
+                  // Old format detected! Upgrade it to match the new UI expectations
+                  formatted.Add($"{p}-Lec");
+                  formatted.Add($"{p}-Lab");
+               }
+         }
+         return string.Join(",", formatted.Distinct());
+      }
+
    }
 }
