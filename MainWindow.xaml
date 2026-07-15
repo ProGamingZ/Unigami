@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:UniversityScheduler.Views"
         Title="UNIGAMI Main Window" Height="768" Width="1366"
-        WindowState="Maximized">
+        WindowState="Maximized"
+        PreviewKeyDown="Window_PreviewKeyDown">
 
     <Grid Background="{StaticResource BackgroundBrush}">
         <Grid.RowDefinitions>
@@ -698,29 +699,29 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <views:ScheduleTable x:Name="InstructorScheduleTable"
-                                        Title="Instructor Schedules" 
-                                        Grid.Column="0" 
-                                        Margin="0,0,5,0"
-                                        ShowInstructor="False"
-                                        ShowRoom="True"
-                                        ShowSection="True"/>
+                    <Border x:Name="InstructorTableBorder" Grid.Column="0" Margin="0,0,5,0" BorderThickness="3" BorderBrush="Transparent" CornerRadius="5" PreviewMouseDown="ScheduleTable_PreviewMouseDown" Background="Transparent">
+                        <views:ScheduleTable x:Name="InstructorScheduleTable" Title="Instructor Schedules" ShowInstructor="False" ShowRoom="True" ShowSection="True">
+                            <views:ScheduleTable.LayoutTransform>
+                                <ScaleTransform  ScaleX="1.0" ScaleY="1.0"/>
+                            </views:ScheduleTable.LayoutTransform>
+                        </views:ScheduleTable>
+                    </Border>
 
-                    <views:ScheduleTable x:Name="ClassScheduleTable"
-                                        Title="Class Schedules" 
-                                        Grid.Column="1" 
-                                        Margin="5,0,5,0"
-                                        ShowInstructor="True"
-                                        ShowRoom="True"
-                                        ShowSection="False"/>
+                    <Border x:Name="ClassTableBorder" Grid.Column="1" Margin="5,0,5,0" BorderThickness="3" BorderBrush="Transparent" CornerRadius="5" PreviewMouseDown="ScheduleTable_PreviewMouseDown" Background="Transparent">
+                        <views:ScheduleTable x:Name="ClassScheduleTable" Title="Class Schedules" ShowInstructor="True" ShowRoom="True" ShowSection="False">
+                            <views:ScheduleTable.LayoutTransform>
+                                <ScaleTransform  ScaleX="1.0" ScaleY="1.0"/>
+                            </views:ScheduleTable.LayoutTransform>
+                        </views:ScheduleTable>
+                    </Border>
 
-                    <views:ScheduleTable x:Name="RoomScheduleTable"
-                                        Title="Room Schedules" 
-                                        Grid.Column="2" 
-                                        Margin="5,0,0,0"
-                                        ShowInstructor="True"
-                                        ShowRoom="False"
-                                        ShowSection="True"/>
+                    <Border x:Name="RoomTableBorder" Grid.Column="2" Margin="5,0,0,0" BorderThickness="3" BorderBrush="Transparent" CornerRadius="5" PreviewMouseDown="ScheduleTable_PreviewMouseDown" Background="Transparent">
+                        <views:ScheduleTable x:Name="RoomScheduleTable" Title="Room Schedules" ShowInstructor="True" ShowRoom="False" ShowSection="True">
+                            <views:ScheduleTable.LayoutTransform>
+                                <ScaleTransform  ScaleX="1.0" ScaleY="1.0"/>
+                            </views:ScheduleTable.LayoutTransform>
+                        </views:ScheduleTable>
+                    </Border>
 
 
                 </Grid>

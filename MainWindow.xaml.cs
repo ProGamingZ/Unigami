@@ -350,7 +350,74 @@ namespace UniversityScheduler
         }
 
     #endregion  
-                                        
+
+    #region zoom in/out schedule tables
+        private Border? _activeTableBorder = null;
+
+        private void ScheduleTable_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // 1. Reset all borders to transparent
+            InstructorTableBorder.BorderBrush = System.Windows.Media.Brushes.Transparent;
+            ClassTableBorder.BorderBrush = System.Windows.Media.Brushes.Transparent;
+            RoomTableBorder.BorderBrush = System.Windows.Media.Brushes.Transparent;
+
+            // 2. Highlight the clicked table's outer border (Uses your theme's PrimaryBrush)
+            if (sender is Border clickedBorder)
+            {
+                _activeTableBorder = clickedBorder;
+                
+                var highlightColor = FindResource("PrimaryBrush") as System.Windows.Media.Brush;
+                _activeTableBorder.BorderBrush = highlightColor ?? System.Windows.Media.Brushes.DodgerBlue;
+            }
+        }
+
+        private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // If no table is clicked, do nothing
+            if (_activeTableBorder == null) return;
+
+            // Check if the user is holding Shift
+            if (System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Shift))
+            {
+                // Shift + Plus (Zoom In)
+                if (e.Key == System.Windows.Input.Key.OemPlus || e.Key == System.Windows.Input.Key.Add)
+                {
+                    ZoomActiveTable(0.1);
+                    e.Handled = true; // Prevent the keypress from triggering other UI events
+                }
+                // Shift + Minus (Zoom Out)
+                else if (e.Key == System.Windows.Input.Key.OemMinus || e.Key == System.Windows.Input.Key.Subtract)
+                {
+                    ZoomActiveTable(-0.1);
+                    e.Handled = true;
+                }
+            }
+        }
+
+        private void ZoomActiveTable(double delta)
+        {
+            // Identify which ScaleTransform belongs to the active border by checking the table inside it
+            System.Windows.Media.ScaleTransform? scaleTransform = null;
+
+            if (_activeTableBorder == InstructorTableBorder) 
+                scaleTransform = InstructorScheduleTable.LayoutTransform as System.Windows.Media.ScaleTransform;
+            else if (_activeTableBorder == ClassTableBorder) 
+                scaleTransform = ClassScheduleTable.LayoutTransform as System.Windows.Media.ScaleTransform;
+            else if (_activeTableBorder == RoomTableBorder) 
+                scaleTransform = RoomScheduleTable.LayoutTransform as System.Windows.Media.ScaleTransform;
+
+            if (scaleTransform != null)
+            {
+                // Calculate new scale, enforcing minimum (50% zoom) and maximum (300% zoom) limits
+                double newScale = Math.Max(0.5, Math.Min(3.0, scaleTransform.ScaleX + delta));
+                
+                // Apply the scale to both X and Y axes uniformly
+                scaleTransform.ScaleX = newScale;
+                scaleTransform.ScaleY = newScale;
+            }
+        }
+    #endregion   
+
     }
     public class AlertItem
     {
