@@ -3,79 +3,222 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="800" >
-    <Grid Margin="20">
+             mc:Ignorable="d" d:DesignHeight="720" d:DesignWidth="1280" >
+    <Grid Margin="15">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/> 
+            <ColumnDefinition Width="*"/>   
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <UniformGrid Grid.Row="1" Columns="2" Rows="2" VerticalAlignment="Top">
-            
-            <Border Background="{StaticResource BackgroundBrush1}" Margin="0,0,20,20" CornerRadius="10" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Border Background="{StaticResource SidebarBrush}" CornerRadius="10,10,0,0" Padding="15">
-                        <TextBlock Text="Total Instructors" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="16"/>
-                    </Border>
-                    <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock x:Name="InstructorCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Active Faculty" Foreground="Gray" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+        <!-- QUADRANT 1 (Top-Left): INSTRUCTORS -->
+        <Border Grid.Row="0" Grid.Column="0" Background="{StaticResource BackgroundBrush1}" Margin="5,5,10,10" CornerRadius="8" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Border Background="{StaticResource SidebarBrush}" CornerRadius="7,7,0,0" Padding="10">
+                    <TextBlock Text="👩‍🏫 Instructor Analytics" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Row="1" Margin="0,15,0,10">
+                    <TextBlock x:Name="InstructorCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Total Active Faculty" Foreground="Gray" HorizontalAlignment="Center" FontSize="13"/>
+                </StackPanel>
+                
+                <!-- Added WrapPanel and Disabled Horizontal Scroll -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="15,0,5,15">
+                    <ItemsControl x:Name="InstructorStatsList">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- Converted to a fixed-width card -->
+                                <Border Width="260" Background="{StaticResource BackgroundBrush}" CornerRadius="6" Padding="12" Margin="0,0,10,10" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,5">
+                                            <TextBlock Text="{Binding Status}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource SidebarBrush}"/>
+                                            <TextBlock Text="{Binding TotalCount, StringFormat='Total: {0}'}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding ZeroUnitsCount, StringFormat='⚠ {0} have 0 units assigned'}" Foreground="{StaticResource DangerBrush}" FontSize="12" FontWeight="SemiBold" Visibility="{Binding ZeroUnitsVisibility}" Margin="0,0,0,5"/>
+                                        <Border BorderBrush="{StaticResource TableLineBrush}" BorderThickness="0,1,0,0" Margin="0,5,0,0" Padding="0,5,0,0">
+                                            <ItemsControl ItemsSource="{Binding ProgramStats}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,2">
+                                                            <TextBlock Text="{Binding Name, StringFormat='• {0}'}" FontSize="13" Foreground="{StaticResource TextDarkBrush}"/>
+                                                            <TextBlock Text="{Binding Count}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource InfoBrush}" HorizontalAlignment="Right"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
 
-            <Border Background="{StaticResource BackgroundBrush1}" Margin="0,0,0,20" CornerRadius="10" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Border Background="{StaticResource SidebarBrush}" CornerRadius="10,10,0,0" Padding="15">
-                        <TextBlock Text="Total Courses" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="16"/>
-                    </Border>
-                    <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock x:Name="CourseCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Subjects Registered" Foreground="Gray" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+        <!-- QUADRANT 2 (Top-Right): ROOMS & UTILIZATION (Side-by-Side) -->
+        <Grid Grid.Row="0" Grid.Column="1" Margin="10,5,5,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            <Border Background="{StaticResource BackgroundBrush1}" Margin="0,0,20,0" CornerRadius="10" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
+            <!-- Total Rooms by Floor -->
+            <Border Grid.Column="0" Background="{StaticResource BackgroundBrush1}" Margin="0,0,5,0" CornerRadius="8" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Border Background="{StaticResource SidebarBrush}" CornerRadius="10,10,0,0" Padding="15">
-                        <TextBlock Text="Student Sections" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="16"/>
-                    </Border>
-                    <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock x:Name="SectionCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Classes to Schedule" Foreground="Gray" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <Border Background="{StaticResource BackgroundBrush1}" Margin="0,0,0,0" CornerRadius="10" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
-                <Grid>
-                    <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Background="{StaticResource SidebarBrush}" CornerRadius="10,10,0,0" Padding="15">
-                        <TextBlock Text="Total Rooms" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="16"/>
+                    <Border Background="{StaticResource SidebarBrush}" CornerRadius="7,7,0,0" Padding="10">
+                        <TextBlock Text="🚪 Total Rooms" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
                     </Border>
-                    <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel Grid.Row="1" Margin="0,15,0,10">
                         <TextBlock x:Name="RoomCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Available Facilities" Foreground="Gray" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Campus Facilities" Foreground="Gray" HorizontalAlignment="Center" FontSize="13"/>
                     </StackPanel>
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="15,0,15,15">
+                        <ItemsControl x:Name="RoomStatsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource BackgroundBrush}" CornerRadius="6" Padding="10" Margin="0,0,0,8" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
+                                        <Grid>
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextDarkBrush}"/>
+                                            <TextBlock Text="{Binding Count}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource InfoBrush}" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </Grid>
             </Border>
 
-        </UniformGrid>
+            <!-- Room Utilization -->
+            <Border Grid.Column="1" Background="{StaticResource BackgroundBrush1}" Margin="5,0,0,0" CornerRadius="8" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Background="{StaticResource SidebarBrush}" CornerRadius="7,7,0,0" Padding="10">
+                        <TextBlock Text="🏢 Room Utilization" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock x:Name="RoomUtilPercentTxt" Text="0%" FontSize="54" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="RoomUtilSubTxt" Text="0 / 0 Hours Booked" Foreground="Gray" HorizontalAlignment="Center" FontSize="14" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- QUADRANT 3 (Bottom-Left): COURSES -->
+        <Border Grid.Row="1" Grid.Column="0" Background="{StaticResource BackgroundBrush1}" Margin="5,10,10,5" CornerRadius="8" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Border Background="{StaticResource SidebarBrush}" CornerRadius="7,7,0,0" Padding="10">
+                    <TextBlock Text="📚 Total Courses" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Row="1" Margin="0,15,0,10">
+                    <TextBlock x:Name="CourseCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Registered Subjects" Foreground="Gray" HorizontalAlignment="Center" FontSize="13"/>
+                </StackPanel>
+                
+                <!-- Added WrapPanel and Disabled Horizontal Scroll -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="15,0,5,15">
+                    <ItemsControl x:Name="CourseStatsList">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- Converted to a square mini-card -->
+                                <Border Width="150" Background="{StaticResource BackgroundBrush}" CornerRadius="6" Padding="10" Margin="0,0,10,10" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Count}" FontWeight="Bold" FontSize="20" Foreground="{StaticResource InfoBrush}" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- QUADRANT 4 (Bottom-Right): CLASSES (Sections) -->
+        <Border Grid.Row="1" Grid.Column="1" Background="{StaticResource BackgroundBrush1}" Margin="10,10,5,5" CornerRadius="8" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Border Background="{StaticResource SidebarBrush}" CornerRadius="7,7,0,0" Padding="10">
+                    <TextBlock Text="👥 Total Classes" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Row="1" Margin="0,15,0,10">
+                    <TextBlock x:Name="SectionCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Student Cohorts" Foreground="Gray" HorizontalAlignment="Center" FontSize="13"/>
+                </StackPanel>
+                
+                <!-- Added WrapPanel and Disabled Horizontal Scroll -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="15,0,5,15">
+                    <ItemsControl x:Name="SectionStatsList">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- Converted to a fixed-width card -->
+                                <Border Width="220" Background="{StaticResource BackgroundBrush}" CornerRadius="6" Padding="12" Margin="0,0,10,10" BorderBrush="{StaticResource TextLightBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,5">
+                                            <TextBlock Text="{Binding Program}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource SidebarBrush}"/>
+                                            <TextBlock Text="{Binding TotalCount, StringFormat='Total: {0}'}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                        <Border BorderBrush="{StaticResource TableLineBrush}" BorderThickness="0,1,0,0" Margin="0,5,0,0" Padding="0,5,0,0">
+                                            <ItemsControl ItemsSource="{Binding YearStats}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,2">
+                                                            <TextBlock Text="{Binding Name, StringFormat='• {0}'}" FontSize="13" Foreground="{StaticResource TextDarkBrush}"/>
+                                                            <TextBlock Text="{Binding Count}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource InfoBrush}" HorizontalAlignment="Right"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
     </Grid>
 </UserControl>

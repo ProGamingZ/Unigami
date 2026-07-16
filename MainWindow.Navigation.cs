@@ -18,8 +18,8 @@ namespace UniversityScheduler
          { 
             Title = "Instructors", 
             Content = new InstructorsView(_currentSemester), 
-            Width = 1000, 
-            Height = 600, 
+            Width = 1280, Height = 720,
+            MinWidth = 1280, MinHeight = 720, 
             Topmost = GlobalSettings.InstructorsOnTop 
          };
          _instructorsWindow.Closed += (s, args) => _instructorsWindow = null;
@@ -39,8 +39,8 @@ namespace UniversityScheduler
          { 
             Title = "Courses", 
             Content = new CoursesView(), 
-            Width = 900, 
-            Height = 600, 
+            Width = 1280, Height = 720,
+            MinWidth = 1280, MinHeight = 720, 
             Topmost = GlobalSettings.CoursesOnTop 
          };
 
@@ -61,8 +61,8 @@ namespace UniversityScheduler
          { 
             Title = "Curriculum Management", 
             Content = new Views.CurriculumManagerView(_currentSemester), 
-            Width = 1000, 
-            Height = 650, 
+            Width = 1280, Height = 720,
+            MinWidth = 1280, MinHeight = 720,
             Topmost = GlobalSettings.CoursesOnTop 
          };
 
@@ -83,8 +83,8 @@ namespace UniversityScheduler
          { 
             Title = "Classes", 
             Content = new SectionsView(_currentSemester), 
-            Width = 800, 
-            Height = 600, 
+            Width = 1280, Height = 720,
+            MinWidth = 1280, MinHeight = 720, 
             Topmost = GlobalSettings.ClassesOnTop 
          };
 
@@ -105,8 +105,8 @@ namespace UniversityScheduler
          { 
             Title = "Rooms", 
             Content = new RoomsView(), 
-            Width = 800, 
-            Height = 600, 
+            Width = 1280, Height = 720,
+            MinWidth = 1280, MinHeight = 720, 
             Topmost = GlobalSettings.RoomsOnTop 
          };
 
@@ -127,8 +127,8 @@ namespace UniversityScheduler
          { 
             Title = "Stats", 
             Content = new StatsView(), 
-            Width = 500, 
-            Height = 450, 
+            Width = 1280, Height = 720,
+            MinWidth = 1280, MinHeight = 720, 
             Topmost = GlobalSettings.StatsOnTop 
          };
 
@@ -148,7 +148,8 @@ namespace UniversityScheduler
          { 
             Title = "Generator", 
             Content = new MasterScheduleView(), 
-            Width = 1000, Height = 700, 
+            Width = 1280, Height = 720,
+            MinWidth = 1280, MinHeight = 720, 
             Topmost = GlobalSettings.GenerateOnTop 
          };
          _generatorWindow.Closed += (s, args) => _generatorWindow = null;
