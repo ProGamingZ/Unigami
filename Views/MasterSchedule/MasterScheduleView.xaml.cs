@@ -653,7 +653,7 @@ namespace UniversityScheduler.Views
                     string deanPos = GlobalSettings.MasterDeanPos;
 
                     // 3. Locate Template file
-                    string templateFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Template");
+                    string templateFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
                     string templatePath = System.IO.Path.Combine(templateFolder, "WHOLE _CLASS MONITORING_Template_2.xlsx");
 
                     if (!System.IO.File.Exists(templatePath))
