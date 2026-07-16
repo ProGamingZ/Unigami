@@ -23,7 +23,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <Border Background="{StaticResource SidebarBrush}" CornerRadius="7,7,0,0" Padding="10">
-                    <TextBlock Text="👩‍🏫 Instructor Analytics" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Instructor Analytics" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Row="1" Margin="0,15,0,10">
                     <TextBlock x:Name="InstructorCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
@@ -85,7 +85,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Border Background="{StaticResource SidebarBrush}" CornerRadius="7,7,0,0" Padding="10">
-                        <TextBlock Text="🚪 Total Rooms" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Total Rooms" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Row="1" Margin="0,15,0,10">
                         <TextBlock x:Name="RoomCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
@@ -116,7 +116,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Border Background="{StaticResource SidebarBrush}" CornerRadius="7,7,0,0" Padding="10">
-                        <TextBlock Text="🏢 Room Utilization" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Room Utilization" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
                     </Border>
                     <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                         <TextBlock x:Name="RoomUtilPercentTxt" Text="0%" FontSize="54" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
@@ -135,7 +135,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <Border Background="{StaticResource SidebarBrush}" CornerRadius="7,7,0,0" Padding="10">
-                    <TextBlock Text="📚 Total Courses" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Total Courses" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Row="1" Margin="0,15,0,10">
                     <TextBlock x:Name="CourseCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>
@@ -175,7 +175,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <Border Background="{StaticResource SidebarBrush}" CornerRadius="7,7,0,0" Padding="10">
-                    <TextBlock Text="👥 Total Classes" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Total Classes" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Row="1" Margin="0,15,0,10">
                     <TextBlock x:Name="SectionCount" Text="0" FontSize="48" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}" HorizontalAlignment="Center"/>

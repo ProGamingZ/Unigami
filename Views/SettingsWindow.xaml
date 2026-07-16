@@ -64,9 +64,13 @@
                 <GroupBox Header="Export Formatting" Padding="10" Margin="0,15,0,15">
                     <StackPanel>
                         <TextBlock Text="Configure the signatories, dates, and math formulas injected into the Excel Teaching Load reports." Foreground="Gray" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                        <Button Content="⚙️ Configure Excel Template Data" 
+                        <Button Content="Instructor Class Schedule" 
                                 Style="{StaticResource MasterSchedButtonStyle}" 
                                 Click="OpenExportSettings_Click"/>
+                        <Button Content="Master Class Schedule" 
+                                Style="{StaticResource MasterSchedButtonStyle}" 
+                                Margin="0,5,0,0"
+                                Click="OpenMasterExport_Click"/>
                     </StackPanel>
                 </GroupBox>
 

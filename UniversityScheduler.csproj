@@ -22,7 +22,7 @@
     </PackageReference>
     <Resource Include="UNIGAMIicon128.ico" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <None Update="Templates\TeachingLoad_Regular.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -30,6 +30,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Update="Templates\TeachingLoad_Overload.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Templates\WHOLE _CLASS MONITORING_Template_2.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -85,6 +85,10 @@
                             Style="{StaticResource MasterSchedButtonStyle}"
                             Click="AssignInstructors_Click"/>
 
+                    <Button Content="Export Excel" 
+                            Style="{StaticResource MasterSchedButtonStyle}"
+                            Click="ExportSchedule_Click"/>   
+                             
                     <Button Content="Save Schedule" 
                             Style="{StaticResource MasterSchedButtonStyle}"
                             Click="SaveSchedule_Click"/>

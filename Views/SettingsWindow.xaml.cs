@@ -112,5 +112,13 @@ namespace UniversityScheduler.Views
             exportWin.ShowDialog();
         }
         
+        private void OpenMasterExport_Click(object sender, RoutedEventArgs e)
+        {
+            var masterExportWin = new MasterScheduleExportWindow();
+            masterExportWin.Owner = this;
+            masterExportWin.ShowDialog();
+        }
+
+
     }
 }

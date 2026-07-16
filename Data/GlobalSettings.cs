@@ -114,6 +114,15 @@ namespace UniversityScheduler
                         FormulaContactHours = data.FormulaContactHours ?? "=SUM(AW19:AW46)";                        
                         
                         LastAlertDate = data.LastAlertDate;
+
+                        MasterSchoolYear = data.MasterSchoolYear ?? "SY: 2025-2026";
+                        MasterDateText = data.MasterDateText ?? "";
+                        MasterDeptName = data.MasterDeptName ?? "COLLEGE OF COMPUTING AND INFORMATION SCIENCES";
+                        MasterDeptAcronym = data.MasterDeptAcronym ?? "CCIS";
+                        MasterSecName = data.MasterSecName ?? "";
+                        MasterSecPos = data.MasterSecPos ?? "SECRETARY";
+                        MasterDeanName = data.MasterDeanName ?? "";
+                        MasterDeanPos = data.MasterDeanPos ?? "DEAN";
                     }
                 }
             }
@@ -168,7 +177,16 @@ namespace UniversityScheduler
                     FormulaLabHours = FormulaLabHours,
                     FormulaContactHours = FormulaContactHours,
 
-                    LastAlertDate = LastAlertDate
+                    LastAlertDate = LastAlertDate,
+
+                    MasterSchoolYear = MasterSchoolYear,
+                    MasterDateText = MasterDateText,
+                    MasterDeptName = MasterDeptName,
+                    MasterDeptAcronym = MasterDeptAcronym,
+                    MasterSecName = MasterSecName,
+                    MasterSecPos = MasterSecPos,
+                    MasterDeanName = MasterDeanName,
+                    MasterDeanPos = MasterDeanPos,
                 };
 
                 string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
@@ -186,6 +204,16 @@ namespace UniversityScheduler
                 MessageBox.Show($"Failed to save settings!\nPath: {SettingsPath}\nError: {ex.Message}", "Settings Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+
+        public static string MasterSchoolYear { get; set; } = "SY: 2025-2026";
+        public static string MasterDateText { get; set; } = "";
+        public static string MasterDeptName { get; set; } = "COLLEGE OF COMPUTING AND INFORMATION SCIENCES";
+        public static string MasterDeptAcronym { get; set; } = "CCIS";
+        public static string MasterSecName { get; set; } = "";
+        public static string MasterSecPos { get; set; } = "SECRETARY";
+        public static string MasterDeanName { get; set; } = "";
+        public static string MasterDeanPos { get; set; } = "DEAN";
 
         private class GlobalSettingsData
         {
@@ -231,6 +259,15 @@ namespace UniversityScheduler
             public string? FormulaLecHours { get; set; }
             public string? FormulaLabHours { get; set; }
             public string? FormulaContactHours { get; set; }
+
+            public string? MasterSchoolYear { get; set; }
+            public string? MasterDateText { get; set; }
+            public string? MasterDeptName { get; set; }
+            public string? MasterDeptAcronym { get; set; }
+            public string? MasterSecName { get; set; }
+            public string? MasterSecPos { get; set; }
+            public string? MasterDeanName { get; set; }
+            public string? MasterDeanPos { get; set; }
         }
     }
 }

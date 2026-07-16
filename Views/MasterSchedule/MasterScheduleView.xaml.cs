@@ -1,4 +1,5 @@
 using System;
+using ClosedXML.Excel;
 using System.IO;
 using System.Text.Json;
 using Microsoft.Win32;
@@ -634,6 +635,199 @@ namespace UniversityScheduler.Views
 
         #region Import / Export Logic
 
+            private void ExportSchedule_Click(object sender, RoutedEventArgs e)
+            {
+                try
+                {
+                    // 1. Get Semester directly from the View's dropdown
+                    int targetSem = int.Parse(GetTag(SemSelector));
+                    
+                    // 2. Get Settings from GlobalSettings
+                    string schoolYear = GlobalSettings.MasterSchoolYear;
+                    string targetDate = string.IsNullOrWhiteSpace(GlobalSettings.MasterDateText) ? DateTime.Now.ToString("MM/dd/yyyy") : GlobalSettings.MasterDateText;
+                    string deptName = GlobalSettings.MasterDeptName;
+                    string deptAcro = GlobalSettings.MasterDeptAcronym;
+                    string secName = GlobalSettings.MasterSecName;
+                    string secPos = GlobalSettings.MasterSecPos;
+                    string deanName = GlobalSettings.MasterDeanName;
+                    string deanPos = GlobalSettings.MasterDeanPos;
+
+                    // 3. Locate Template file
+                    string templateFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Template");
+                    string templatePath = System.IO.Path.Combine(templateFolder, "WHOLE _CLASS MONITORING_Template_2.xlsx");
+
+                    if (!System.IO.File.Exists(templatePath))
+                    {
+                        MessageBox.Show($"Template not found!\nPlease ensure the file exists at:\n{templatePath}", "Missing Template", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    var dialog = new Microsoft.Win32.SaveFileDialog
+                    {
+                        Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+                        FileName = $"WHOLE_CLASS_MONITORING_SEM{targetSem}.xlsx"
+                    };
+
+                    if (dialog.ShowDialog() == true)
+                    {
+                        using (var db = new AppDbContext())
+                        {
+                            var rooms = db.Rooms.OrderBy(r => r.FloorLevel).ThenBy(r => r.Name).ToList();
+                            var allSchedules = db.Schedules
+                                .Include(s => s.Course)
+                                .Include(s => s.Section)
+                                .Include(s => s.Instructor)
+                                .Where(s => s.Semester == targetSem)
+                                .ToList();
+                            
+                            var instructors = db.Instructors.ToList();
+                            var smartInstructorNames = GetSmartInstructorNames(instructors);
+
+                            // 4. Open the existing template workbook
+                            using (var workbook = new XLWorkbook(templatePath))
+                            {
+                                string[] days = { "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" };
+
+                                foreach (var day in days)
+                                {
+                                    // Try to get the worksheet. If it doesn't exist (like Sat/Sun), clone MONDAY.
+                                    IXLWorksheet ws;
+                                    if (!workbook.Worksheets.TryGetWorksheet(day, out ws))
+                                    {
+                                        ws = workbook.Worksheet("MONDAY").CopyTo(day);
+                                    }
+
+                                    string dayCode = day.Substring(0, 3); 
+                                    if (day == "THURSDAY") dayCode = "Thu"; 
+                                    else if (day == "TUESDAY") dayCode = "Tue";
+                                    else dayCode = char.ToUpper(day[0]) + day.Substring(1, 2).ToLower();
+
+                                    // Update Basic Headers
+                                    ws.Cell("A1").Value = day;
+                                    ws.Cell("A3").Value = targetDate;
+
+                                    // Calculate the dynamic last column boundary
+                                    int lastRoomCol = rooms.Count > 0 ? rooms.Count + 1 : 4;
+
+                                    // 1. Safely UNMERGE D1, D2, D3 and RE-MERGE to correct dynamic width
+                                    for (int i = 1; i <= 3; i++)
+                                    {
+                                        var mergedRanges = ws.MergedRanges.Where(m => m.Contains(ws.Cell(i, 4))).ToList();
+                                        foreach (var m in mergedRanges) m.Unmerge();
+                                        
+                                        var headerRange = ws.Range(i, 4, i, lastRoomCol);
+                                        headerRange.Merge();
+                                        headerRange.Style.Font.Bold = true;
+                                        headerRange.Style.Font.FontName = "Bahnschrift SemiBold SemiConden"; // <-- Font Applied
+                                        headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                                        
+                                        // Apply the strong right border exactly at the dynamic edge
+                                        ws.Cell(i, lastRoomCol).Style.Border.RightBorder = XLBorderStyleValues.Thin;
+                                    }
+
+                                    ws.Cell("D1").Value = deptName;
+                                    ws.Cell("D2").Value = "REGULAR CLASS MONITORING";
+                                    ws.Cell("D3").Value = $"{(targetSem == 1 ? "FIRST" : "SECOND")} SEMESTER {schoolYear}";
+
+                                    // 2. Write Room Headers and draw the dynamic Vertical Grid
+                                    for (int i = 0; i < rooms.Count; i++)
+                                    {
+                                        int colIndex = i + 2;
+                                        ws.Column(colIndex).Width = 15;
+                                        
+                                        // Room Header (Row 4)
+                                        var headerCell = ws.Cell(4, colIndex);
+                                        headerCell.Value = rooms[i].Name;
+                                        headerCell.Style.Font.Bold = true;
+                                        headerCell.Style.Font.FontName = "Bahnschrift SemiBold SemiConden"; 
+                                        headerCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                                        headerCell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin; 
+                                        
+                                        // Standardize empty schedule grid (Rows 5 to 32)
+                                        var colRange = ws.Range(5, colIndex, 32, colIndex); 
+                                        colRange.Clear(XLClearOptions.Contents);
+                                        colRange.Style.Font.FontName = "Bahnschrift SemiBold SemiConden"; 
+                                        colRange.Style.Border.TopBorder = XLBorderStyleValues.None;
+                                        colRange.Style.Border.BottomBorder = XLBorderStyleValues.None;
+                                        colRange.Style.Border.LeftBorder = XLBorderStyleValues.Thin;
+                                        colRange.Style.Border.RightBorder = XLBorderStyleValues.Thin;
+                                        
+                                        // Cap the bottom of the grid
+                                        ws.Cell(32, colIndex).Style.Border.BottomBorder = XLBorderStyleValues.Thin; 
+                                    }
+
+                                    // 3. Delete extra room columns formatting if the template was wider than the database
+                                    int lastUsedCol = ws.LastColumnUsed().ColumnNumber();
+                                    if (lastUsedCol > lastRoomCol)
+                                    {
+                                        // Only clear rows 1 to 32
+                                        ws.Range(1, lastRoomCol + 1, 32, lastUsedCol).Clear(XLClearOptions.All); 
+                                    }
+
+                                    // 4. Populate Schedules inside Borders
+                                    var daySchedules = allSchedules.Where(s => s.Day == dayCode).ToList();
+                                    foreach (var sched in daySchedules)
+                                    {
+                                        if (!TimeSpan.TryParse(sched.StartTime, out TimeSpan start) || !TimeSpan.TryParse(sched.EndTime, out TimeSpan end)) continue;
+                                        
+                                        int roomIdx = rooms.FindIndex(r => r.Id == sched.RoomId);
+                                        if (roomIdx == -1) continue;
+
+                                        int startRow = 5 + (int)((start.TotalMinutes - 420) / 30); // 7:00 AM starts at row 5
+                                        int blocks = (int)((end.TotalMinutes - start.TotalMinutes) / 30);
+                                        int excelCol = roomIdx + 2;
+
+                                        string courseSuffix = sched.Component == "Lab" ? "Lab" : "Lec";
+                                        string courseStr = $"{sched.Course?.Code} {courseSuffix}";
+                                        string sectionStr = $"{sched.Section?.Program} {sched.Section?.YearLevel}{sched.Section?.Name}";
+                                        string instructorStr = sched.InstructorId.HasValue ? smartInstructorNames[sched.InstructorId.Value] : "TBA";
+
+                                        for (int b = 0; b < blocks; b++)
+                                        {
+                                            int r = startRow + b;
+                                            var cell = ws.Cell(r, excelCol);
+                                            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                                            cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+                                            if (b == 0) 
+                                            {
+                                                cell.Value = courseStr;
+                                                cell.Style.Border.TopBorder = XLBorderStyleValues.Thin; // Top cap of the class block
+                                            }
+                                            else if (b == 1) cell.Value = sectionStr;
+                                            else if (b == 2) cell.Value = instructorStr;
+                                            else cell.Value = "-DO-";
+
+                                            if (b == blocks - 1) 
+                                            {
+                                                cell.Style.Border.BottomBorder = XLBorderStyleValues.Thin; // Bottom cap of the class block
+                                            }
+                                        }
+                                    }
+
+                                    // 5. Write Signatures based on exact coordinates
+                                    ws.Cell(40, 2).Value = secName;
+                                    ws.Cell(40, 2).Style.Font.Bold = true;
+                                    ws.Cell(41, 2).Value = $"{deptAcro} {secPos}";
+                                    
+                                    ws.Cell(40, 7).Value = deanName;
+                                    ws.Cell(40, 7).Style.Font.Bold = true;
+                                    ws.Cell(41, 7).Value = $"{deptAcro} {deanPos}";
+                                    ws.Range(40, 2, 41, 7).Style.Font.FontName = "Bahnschrift SemiBold SemiConden";
+                                }
+
+                                workbook.SaveAs(dialog.FileName);
+                                MessageBox.Show("Master Schedule Exported Successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Export failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            
             private void SaveSchedule_Click(object sender, RoutedEventArgs e)
             {
                 try
