@@ -10,6 +10,11 @@ namespace UniversityScheduler
         // 🟢 FIX: Ensure the path is valid and points to a 'Data' folder next to the .exe
         private static string SettingsPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "app_settings.json");
 
+        static GlobalSettings()
+        {
+            Load();
+        }
+
         // --- PUBLIC SETTINGS ---
         public static bool InstructorsOnTop { get; set; }
         public static bool CoursesOnTop { get; set; }
@@ -66,7 +71,11 @@ namespace UniversityScheduler
                 if (File.Exists(SettingsPath))
                 {
                     string json = File.ReadAllText(SettingsPath);
-                    var data = JsonSerializer.Deserialize<GlobalSettingsData>(json);
+                    
+                    // Added options to ensure it reads the data regardless of casing issues
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var data = JsonSerializer.Deserialize<GlobalSettingsData>(json, options);
+                    
                     if (data != null)
                     {
                         InstructorsOnTop = data.InstructorsOnTop;
@@ -126,7 +135,11 @@ namespace UniversityScheduler
                     }
                 }
             }
-            catch { /* Ignore errors on first run */ }
+            catch (Exception ex) 
+            { 
+                // Un-silenced the catch block so you know if the JSON crashes
+                MessageBox.Show($"Failed to load settings file!\n\nThe app will use default settings.\nError: {ex.Message}", "Settings Load Error", MessageBoxButton.OK, MessageBoxImage.Warning); 
+            }
         }
 
         public static void Save()
@@ -215,7 +228,7 @@ namespace UniversityScheduler
         public static string MasterDeanName { get; set; } = "";
         public static string MasterDeanPos { get; set; } = "DEAN";
 
-        private class GlobalSettingsData
+        public class GlobalSettingsData
         {
             public bool InstructorsOnTop { get; set; }
             public bool CoursesOnTop { get; set; }
