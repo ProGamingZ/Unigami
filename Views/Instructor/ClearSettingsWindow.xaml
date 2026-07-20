@@ -1,0 +1,52 @@
+<Window x:Class="UniversityScheduler.Views.ClearSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Clear Settings" Height="450" Width="400"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" Background="#F7F9F9">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Clear Instructor Settings" FontSize="18" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+
+        <StackPanel Grid.Row="1">
+            <TextBlock Text="1. Select Semester(s)" FontWeight="SemiBold" Margin="0,0,0,5"/>
+            <StackPanel Orientation="Horizontal" Margin="10,0,0,15">
+                <CheckBox x:Name="CbSem1" Content="Semester 1" Margin="0,0,15,0" IsChecked="True"/>
+                <CheckBox x:Name="CbSem2" Content="Semester 2" IsChecked="True"/>
+            </StackPanel>
+
+            <Grid Margin="0,0,0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="2. Select Settings to Clear" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <CheckBox x:Name="CbAllSettings" Grid.Column="1" Content="Select All" Checked="CbAllSettings_Toggle" Unchecked="CbAllSettings_Toggle"/>
+            </Grid>
+            
+            <Border BorderBrush="#BDC3C7" BorderThickness="1" CornerRadius="4" Background="White" Padding="10">
+                <StackPanel x:Name="SettingsPanel">
+                    <CheckBox x:Name="CbSections" Content="Assigned Sections" Margin="0,5"/>
+                    <CheckBox x:Name="CbCourses" Content="Preferred Courses" Margin="0,5"/>
+                    <CheckBox x:Name="CbTime" Content="Schedule Time Preferences" Margin="0,5"/>
+                    <CheckBox x:Name="CbRoom" Content="Assigned Homeroom" Margin="0,5"/>
+                    <CheckBox x:Name="CbPrograms" Content="Programs &amp; Year Levels" Margin="0,5"/>
+                    <CheckBox x:Name="CbStatus" Content="Employment Status &amp; Max Units" Margin="0,5"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <Grid Grid.Row="2" Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Content="Cancel" Margin="0,0,5,0" Height="35" Click="Cancel_Click"/>
+            <Button Content="Clear Selected Settings" Grid.Column="1" Margin="5,0,0,0" Height="35" Background="#E74C3C" Foreground="White" FontWeight="Bold" Click="Apply_Click"/>
+        </Grid>
+    </Grid>
+</Window>

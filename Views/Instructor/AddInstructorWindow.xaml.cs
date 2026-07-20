@@ -476,14 +476,14 @@ namespace UniversityScheduler.Views
             List<string> yrs1 = new List<string>();
             if (CbYear1Sem1.IsChecked == true) yrs1.Add("1"); if (CbYear2Sem1.IsChecked == true) yrs1.Add("2");
             if (CbYear3Sem1.IsChecked == true) yrs1.Add("3"); if (CbYear4Sem1.IsChecked == true) yrs1.Add("4");
-            int units1 = int.TryParse(UnitsTxtSem1.Text, out int u1) ? u1 : 24;
+            int units1 = int.TryParse(UnitsTxtSem1.Text, out int u1) ? u1 : 0;
 
             // --- GATHER SEMESTER 2 DATA ---
             var progs2 = AvailableProgramsSem2.Where(p => p.IsSelected).Select(p => p.Name).ToList();
             List<string> yrs2 = new List<string>();
             if (CbYear1Sem2.IsChecked == true) yrs2.Add("1"); if (CbYear2Sem2.IsChecked == true) yrs2.Add("2");
             if (CbYear3Sem2.IsChecked == true) yrs2.Add("3"); if (CbYear4Sem2.IsChecked == true) yrs2.Add("4");
-            int units2 = int.TryParse(UnitsTxtSem2.Text, out int u2) ? u2 : 24;
+            int units2 = int.TryParse(UnitsTxtSem2.Text, out int u2) ? u2 : 0;
 
             using (var db = new AppDbContext())
             {
@@ -515,7 +515,7 @@ namespace UniversityScheduler.Views
                 target.AdministrativeDesignation = AdminDesignationTxt.Text.Trim();
 
                 // Sem 1
-                target.StatusSem1 = (StatusComboSem1.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time";
+                target.StatusSem1 = (StatusComboSem1.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "None";
                 target.MaxUnitsSem1 = units1;
                 target.ProgramSem1 = string.Join(", ", progs1);
                 target.SchedulePreferencesSem1 = string.Join(";", _timeBlocksSem1.Select(b => b.ValueString));
@@ -525,7 +525,7 @@ namespace UniversityScheduler.Views
                 target.AssignedRoomIdSem1 = AssignedRoomComboSem1.SelectedValue as int?;
 
                 // Sem 2
-                target.StatusSem2 = (StatusComboSem2.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Full-time";
+                target.StatusSem2 = (StatusComboSem2.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "None";
                 target.MaxUnitsSem2 = units2;
                 target.ProgramSem2 = string.Join(", ", progs2);
                 target.SchedulePreferencesSem2 = string.Join(";", _timeBlocksSem2.Select(b => b.ValueString));

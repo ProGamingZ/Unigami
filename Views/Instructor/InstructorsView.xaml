@@ -80,7 +80,8 @@
         </DataGrid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-            <Button Content="Unassign Selected" Style="{StaticResource DangerButton}" Width="140" Height="35" Margin="0,0,10,0" Click="UnassignButton_Click"/>
+            <Button Content="Clear Settings" Style="{StaticResource DangerButton}" Width="120" Height="35" Margin="0,0,10,0" Click="ClearSettings_Click"/>
+            <Button Content="Unassign Schedules" Style="{StaticResource DangerButton}" Width="140" Height="35" Margin="0,0,10,0" Click="UnassignButton_Click"/>
             <Button Content="Reset All" Style="{StaticResource DangerButton}" Width="100" Height="35" Margin="0,0,10,0" Click="Reset_Click"/>
             <Button Content="Edit Instructor" Style="{StaticResource SecondaryButton}" Width="140" Height="35" Margin="0,0,10,0" Click="EditButton_Click"/>
             <Button Content="Remove Instructor" Style="{StaticResource DangerButton}" Width="140" Height="35" Margin="0,0,10,0" Click="DeleteButton_Click"/>

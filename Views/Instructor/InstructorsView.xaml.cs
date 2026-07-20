@@ -199,6 +199,28 @@ namespace UniversityScheduler.Views
                 MainWindow.TriggerDatabaseUpdated();
             }
         }
+    
+        private void ClearSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedItems = InstructorsGrid.SelectedItems.Cast<InstructorViewModel>().ToList();
+
+            if (selectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select at least one instructor to clear settings for.");
+                return;
+            }
+
+            var instructorIds = selectedItems.Select(vm => vm.Source.Id).ToList();
+            
+            var clearWindow = new ClearSettingsWindow(instructorIds);
+            clearWindow.Topmost = true;
+            clearWindow.Owner = Window.GetWindow(this);
+            clearWindow.ShowDialog();
+            
+            LoadInstructors();
+            MainWindow.TriggerDatabaseUpdated();
+        }
+    
     }
 
     // --- Helper Class for Display ---

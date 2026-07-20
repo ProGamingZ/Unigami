@@ -33,8 +33,8 @@ namespace UniversityScheduler.Data
         public bool IsScheduleLocked { get; set; } = false;
 
         // ================= SEMESTER 1 DATA =================
-        public string StatusSem1 { get; set; } = "Full-time";
-        public int MaxUnitsSem1 { get; set; } = 24;
+        public string StatusSem1 { get; set; } = "None";
+        public int MaxUnitsSem1 { get; set; } = 0;
         public string ProgramSem1 { get; set; } = string.Empty;
         public string SchedulePreferencesSem1 { get; set; } = string.Empty;
         public string PreferredYearLevelsSem1 { get; set; } = string.Empty;
@@ -45,8 +45,8 @@ namespace UniversityScheduler.Data
         public Room? AssignedRoomSem1 { get; set; }
 
         // ================= SEMESTER 2 DATA =================
-        public string StatusSem2 { get; set; } = "Full-time";
-        public int MaxUnitsSem2 { get; set; } = 24;
+        public string StatusSem2 { get; set; } = "None";
+        public int MaxUnitsSem2 { get; set; } = 0;
         public string ProgramSem2 { get; set; } = string.Empty;
         public string SchedulePreferencesSem2 { get; set; } = string.Empty;
         public string PreferredYearLevelsSem2 { get; set; } = string.Empty;
