@@ -27,23 +27,6 @@ namespace UniversityScheduler
          SaveFileDialog saveDialog = new SaveFileDialog { Filter = "Excel CSV (*.csv)|*.csv", FileName = $"{section.Program}_{section.YearLevel}{section.Name}_Schedule.csv" };
          if (saveDialog.ShowDialog() == true) ExportScheduleToCsv(saveDialog.FileName, null, section.Id);
       }
-      private void ExportRoomBtn_Click(object sender, RoutedEventArgs e)
-      {
-         if (RoomSelector.SelectedItem is not Room selectedRoom) return;
-
-         SaveFileDialog saveDialog = new SaveFileDialog
-         {
-            Filter = "Excel CSV (*.csv)|*.csv",
-            FileName = $"{selectedRoom.Name}_Schedule.csv"
-         };
-
-         if (saveDialog.ShowDialog() == true)
-         {
-            // Pass null for Instructor/Section, and the Room ID
-            // Note: You need to update ExportScheduleToCsv to accept a RoomId parameter!
-            ExportScheduleToCsv(saveDialog.FileName, null, null, selectedRoom.Id);
-         }
-      }
       private void ExportScheduleToCsv(string fileName, int? instructorId, int? sectionId, int? roomId = null)
       {
          try

@@ -13,17 +13,6 @@ namespace UniversityScheduler
 {
    public partial class MainWindow : Window
    {
-      // ✂️ CUT & PASTE THESE FROM THE ORIGINAL FILE:
-      // 1. ExporttoExcelBtn_Click
-      // 2. ExportRegularTeachingLoad_Click
-      // 3. ExportTeachingOverload_Click
-      // 4. InjectMetadataAndFormulas
-      // 5. ExecuteSplitTeachingLoadExport
-      // 6. FillTeachingLoadSheet
-      // 7. GetDayColumnExcel
-      // 8. GetTimeRowExcel
-      // 9. IsOverload
-
       private void ExporttoExcelBtn_Click(object sender, RoutedEventArgs e)
       {
          if (sender is Button btn && btn.ContextMenu != null)
@@ -32,7 +21,6 @@ namespace UniversityScheduler
             btn.ContextMenu.IsOpen = true;
          }
       }
-
       private void ExportRegularTeachingLoad_Click(object sender, RoutedEventArgs e)
       {
          ExecuteSplitTeachingLoadExport(
@@ -41,7 +29,6 @@ namespace UniversityScheduler
             defaultFileNameSuffix: "_Regular_Teaching_Load.xlsx"
          );
       }
-
       private void ExportTeachingOverload_Click(object sender, RoutedEventArgs e)
       {
          ExecuteSplitTeachingLoadExport(
@@ -50,7 +37,6 @@ namespace UniversityScheduler
             defaultFileNameSuffix: "_Teaching_Overload.xlsx"
          );
       }
-
       public static void InjectMetadataAndFormulas(IXLWorksheet ws)
       {
          string today = DateTime.Now.ToString("MMMM dd, yyyy");
@@ -98,7 +84,6 @@ namespace UniversityScheduler
             ws.Cell("AW55").FormulaA1 = GlobalSettings.FormulaLabHours.Replace("=", "");
          }
       }
-
       private void ExecuteSplitTeachingLoadExport(bool isOverloadTarget, string templateName, string defaultFileNameSuffix)
       {
          if (InstructorSelector.SelectedItem is not Instructor selectedInstructor) 
@@ -165,7 +150,6 @@ namespace UniversityScheduler
             MessageBox.Show($"Error during Excel generation: {ex.Message}", "Export Failure", MessageBoxButton.OK, MessageBoxImage.Error); 
          }
       }
-
       private void FillTeachingLoadSheet(IXLWorksheet ws, Instructor instructor, List<ClassSchedule> schedules, bool isOverload)
       {
          // --- 1. Inject Profile Data ---
@@ -381,7 +365,6 @@ namespace UniversityScheduler
             ws.Cell("AW55").Value = totalSemesterLabHours;
          }
       }
-
       private int GetDayColumnExcel(string day)
       {
          return day switch
@@ -395,7 +378,6 @@ namespace UniversityScheduler
             _ => -1
          };
       }
-
       private int GetTimeRowExcel(string startTimeStr)
       {
          TimeSpan time = ParseTime(startTimeStr);
@@ -412,7 +394,6 @@ namespace UniversityScheduler
          }
          return -1;
       }
-
       private bool IsOverload(string startTimeStr, string endTimeStr)
       {
          TimeSpan start = ParseTime(startTimeStr);
@@ -432,7 +413,223 @@ namespace UniversityScheduler
       }
 
 
+      private void ExportRoomBtn_Click(object sender, RoutedEventArgs e)
+      {
+         if (RoomSelector.SelectedItem is not Room selectedRoom) 
+         {
+             MessageBox.Show("Please select a room first.");
+             return;
+         }
 
+         SaveFileDialog saveDialog = new SaveFileDialog
+         {
+            Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+            FileName = $"{selectedRoom.Name}_Schedule.xlsx"
+         };
+
+         if (saveDialog.ShowDialog() == true)
+         {
+            ExecuteRoomScheduleExport(selectedRoom, saveDialog.FileName);
+         }
+      }
+      private void ExecuteRoomScheduleExport(Room room, string savePath)
+      {
+         try
+         {
+            string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", "RoomSched.xlsx");
+            if (!File.Exists(templatePath))
+            {
+               MessageBox.Show($"Template file 'RoomSched.xlsx' not found in the Templates folder!", "Missing File", MessageBoxButton.OK, MessageBoxImage.Error);
+               return;
+            }
+
+            using (var db = new AppDbContext())
+            {
+               // Fetch schedules for this room
+               var schedules = db.Schedules
+                  .Include(s => s.Course)
+                  .Include(s => s.Section)
+                  .Include(s => s.Instructor)
+                  .Where(s => s.Semester == _currentSemester && s.RoomId == room.Id)
+                  .ToList();
+
+               // Find duplicate surnames across the entire database to handle the name formatting
+               var duplicateSurnames = db.Instructors
+                  .GroupBy(i => i.Surname)
+                  .Where(g => g.Count() > 1)
+                  .Select(g => g.Key)
+                  .ToHashSet();
+
+               using (var workbook = new XLWorkbook(templatePath))
+               {
+                  var ws = workbook.Worksheets.First();
+                  
+                  // 1. Load Custom Room Settings from the UI
+                  var config = Views.RoomExportSettingsWindow.GetConfig();
+                  
+                  ws.Cell("A2").Value = config.UniversityName;
+                  
+                  ws.Cell("A3").Value = config.DepartmentName;
+                  ws.Cell("A3").Style.Fill.BackgroundColor = XLColor.FromHtml("#FFFF00"); // Yellow Highlight
+
+                  // Determine Room Prefix
+                  var mapping = config.Mappings.FirstOrDefault(m => m.RoomType == room.Type);
+                  string prefix = mapping != null ? mapping.Prefix : room.Type;
+                  ws.Cell("A5").Value = $"{prefix} {room.Name}";
+
+                  // 2. Fill the Schedule Grid (Row 8 to 35)
+                  foreach (var schedule in schedules)
+                  {
+                     if (schedule.Course == null) continue;
+
+                     int col = GetRoomDayColumnExcel(schedule.Day);
+                     int startRow = GetRoomTimeRowExcel(schedule.StartTime);
+                     int endRow = GetRoomTimeRowExcel(schedule.EndTime);
+
+                     if (col > 0 && startRow >= 8 && endRow > startRow)
+                     {
+                           int durationRows = endRow - startRow;
+                           
+                           // Calculate formatted Instructor Name
+                           string instructorName = "TBA";
+                           if (schedule.Instructor != null)
+                           {
+                              if (duplicateSurnames.Contains(schedule.Instructor.Surname))
+                              {
+                                 // Extract first letters of all first names (e.g. "Mary Ann" -> "M.A.")
+                                 var firstNames = schedule.Instructor.FirstName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                                 string initials = string.Join("", firstNames.Select(n => n[0] + "."));
+                                 instructorName = $"{initials} {schedule.Instructor.Surname}";
+                              }
+                              else
+                              {
+                                 instructorName = schedule.Instructor.Surname;
+                              }
+                           }
+
+                           string compLabel = schedule.Component.Contains("Lab") ? "Lab" : "Lec";
+                           string sectionName = schedule.Section != null ? schedule.Section.FullDisplayName : "TBA";
+
+                           // Inject Row by Row WITHOUT Merging
+                           for (int r = 0; r < durationRows; r++)
+                           {
+                              var cell = ws.Cell(startRow + r, col);
+                              
+                              // Reset any existing formatting from the template
+                              cell.Style.Border.TopBorder = XLBorderStyleValues.None;
+                              cell.Style.Border.BottomBorder = XLBorderStyleValues.None;
+
+                              // --- CONTENT INJECTION ---
+                              if (r == 0) 
+                              {
+                                 cell.Value = $"{schedule.Course.Code} {compLabel}";
+                              }
+                              else if (r == 1) 
+                              {
+                                 cell.Value = sectionName;
+                              }
+                              else if (r == 2) 
+                              {
+                                 cell.Value = instructorName;
+                                 cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#FFFF00"); // Yellow Highlight
+                              }
+                              else 
+                              {
+                                 cell.Value = "-DO-";
+                              }
+
+                              // --- ALIGNMENT ---
+                              cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                              cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                              cell.Style.Alignment.WrapText = true;
+
+                              // --- BORDER LOGIC ---
+                              // Always have left and right borders to create the "column"
+                              cell.Style.Border.LeftBorder = XLBorderStyleValues.Thin;
+                              cell.Style.Border.RightBorder = XLBorderStyleValues.Thin;
+
+                              // Only put a top border on the VERY FIRST cell of the block
+                              if (r == 0) cell.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                              
+                              // Only put a bottom border on the VERY LAST cell of the block
+                              if (r == durationRows - 1) cell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                           }
+                     }
+                  }
+
+                  // 3. Fill the Room Load Table (Row 38 Onwards)
+                  int loadRow = 38;
+                  int totalUnits = 0;
+
+                  var uniqueCourses = schedules
+                     .Where(s => s.Course != null)
+                     .GroupBy(s => new { s.CourseId, s.Component })
+                     .Select(g => g.First())
+                     .ToList();
+
+                  foreach(var s in uniqueCourses)
+                  {
+                     string compLabel = s.Component.Contains("Lab") ? "Lab" : "Lec";
+                     ws.Cell(loadRow, 1).Value = $"{s.Course!.Code} ({compLabel})";
+                     
+                     // Merge B to F for Description
+                     var descRange = ws.Range(loadRow, 2, loadRow, 6);
+                     descRange.Merge();
+                     descRange.Value = s.Course.Name;
+                     descRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+
+                     ws.Cell(loadRow, 7).Value = s.Course.Units;
+                     
+                     totalUnits += s.Course.Units;
+                     loadRow++;
+                  }
+
+                  // 4. Inject Total Row at the bottom
+                  var totalTextRange = ws.Range(loadRow, 2, loadRow, 6);
+                  totalTextRange.Merge();
+                  totalTextRange.Value = "Total";
+                  totalTextRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                  totalTextRange.Style.Font.Bold = true;
+
+                  ws.Cell(loadRow, 7).Value = totalUnits;
+                  ws.Cell(loadRow, 7).Style.Font.Bold = true;
+
+                  workbook.SaveAs(savePath);
+               }
+
+               MessageBox.Show("Room Schedule exported successfully!", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+         }
+         catch (Exception ex)
+         {
+            MessageBox.Show($"Error during Excel generation: {ex.Message}\n\nPlease ensure your template is formatted correctly and isn't currently open.", "Export Failure", MessageBoxButton.OK, MessageBoxImage.Error);
+         }
+      }
+      private int GetRoomDayColumnExcel(string day)
+      {
+         return day switch
+         {
+            "Mon" => 2, // Column B
+            "Tue" => 3, // Column C
+            "Wed" => 4, // Column D
+            "Thu" => 5, // Column E
+            "Fri" => 6, // Column F
+            "Sat" => 7, // Column G
+            _ => -1
+         };
+      }
+      private int GetRoomTimeRowExcel(string timeStr)
+      {
+         if (TimeSpan.TryParse(timeStr, out TimeSpan time))
+         {
+             TimeSpan baseTime = new TimeSpan(7, 0, 0); // Grid starts exactly at 7:00 AM
+             if (time >= baseTime)
+             {
+                 return 8 + (int)((time - baseTime).TotalMinutes / 30);
+             }
+         }
+         return -1;
+      }
 
    }
 }

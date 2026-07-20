@@ -119,6 +119,13 @@ namespace UniversityScheduler.Views
             masterExportWin.ShowDialog();
         }
 
+        private void OpenRoomExportSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var roomExportWin = new RoomExportSettingsWindow();
+            roomExportWin.Owner = this;
+            roomExportWin.Topmost = true;
+            roomExportWin.ShowDialog();
+        }
 
     }
 }
