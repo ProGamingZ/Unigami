@@ -631,5 +631,202 @@ namespace UniversityScheduler
          return -1;
       }
 
+
+      private void ExportClassBtn_Click(object sender, RoutedEventArgs e)
+      {
+         if (ClassSelector.SelectedItem == null) 
+         { 
+            MessageBox.Show("Please select a class section first."); 
+            return; 
+         }
+
+         dynamic selectedItem = ClassSelector.SelectedItem;
+         StudentSection section = selectedItem.OriginalObject;
+
+         SaveFileDialog saveDialog = new SaveFileDialog
+         {
+            Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+            FileName = $"{section.Program}_{section.YearLevel}{section.Name}_Schedule.xlsx"
+         };
+
+         if (saveDialog.ShowDialog() == true)
+         {
+            ExecuteClassScheduleExport(section, saveDialog.FileName);
+         }
+      }
+      private void ExecuteClassScheduleExport(StudentSection section, string savePath)
+      {
+         try
+         {
+            string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", "ClassSched.xlsx");
+            if (!File.Exists(templatePath))
+            {
+               MessageBox.Show($"Template file 'ClassSched.xlsx' not found in the Templates folder!", "Missing File", MessageBoxButton.OK, MessageBoxImage.Error);
+               return;
+            }
+
+            using (var db = new AppDbContext())
+            {
+               var schedules = db.Schedules
+                  .Include(s => s.Course)
+                  .Include(s => s.Room)
+                  .Include(s => s.Instructor)
+                  .Include(s => s.Section)
+                  .Where(s => s.Semester == _currentSemester && s.SectionId == section.Id)
+                  .ToList();
+
+               var duplicateSurnames = db.Instructors
+                  .GroupBy(i => i.Surname)
+                  .Where(g => g.Count() > 1)
+                  .Select(g => g.Key)
+                  .ToHashSet();
+
+               using (var workbook = new XLWorkbook(templatePath))
+               {
+                  var ws = workbook.Worksheets.First();
+                  
+                  var config = Views.ClassExportSettingsWindow.GetConfig();
+                  
+                  // 1. Headers
+                  ws.Cell("A2").Value = config.UniversityName;
+                  
+                  ws.Cell("A3").Value = config.DepartmentName;
+                  ws.Cell("A3").Style.Fill.BackgroundColor = XLColor.FromHtml("#FFFF00");
+
+                  ws.Cell("A5").Value = section.FullDisplayName; 
+
+                  // 2. Schedule Grid
+                  foreach (var schedule in schedules)
+                  {
+                     if (schedule.Course == null) continue;
+
+                     int col = GetRoomDayColumnExcel(schedule.Day); // Reuses the Room Helper since days are identical
+                     int startRow = GetRoomTimeRowExcel(schedule.StartTime);
+                     int endRow = GetRoomTimeRowExcel(schedule.EndTime);
+
+                     if (col > 0 && startRow >= 8 && endRow > startRow)
+                     {
+                           int durationRows = endRow - startRow;
+                           
+                           string instructorName = "TBA";
+                           if (schedule.Instructor != null)
+                           {
+                              if (duplicateSurnames.Contains(schedule.Instructor.Surname))
+                              {
+                                 var firstNames = schedule.Instructor.FirstName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                                 string initials = string.Join("", firstNames.Select(n => n[0] + "."));
+                                 instructorName = $"{initials} {schedule.Instructor.Surname}";
+                              }
+                              else
+                              {
+                                 instructorName = schedule.Instructor.Surname;
+                              }
+                           }
+
+                           string compLabel = schedule.Component.Contains("Lab") ? "Lab" : "Lec";
+                           
+                           // NOTE: Per instructions, Row 2 is Section. Change this to schedule.Room?.Name if you want Room instead.
+                           string sectionName = schedule.Section != null ? schedule.Section.FullDisplayName : "TBA";
+
+                           for (int r = 0; r < durationRows; r++)
+                           {
+                              var cell = ws.Cell(startRow + r, col);
+                              
+                              cell.Style.Border.TopBorder = XLBorderStyleValues.None;
+                              cell.Style.Border.BottomBorder = XLBorderStyleValues.None;
+
+                              if (r == 0) 
+                              {
+                                 cell.Value = $"{schedule.Course.Code} {compLabel}";
+                              }
+                              else if (r == 1) 
+                              {
+                                 cell.Value = sectionName; 
+                              }
+                              else if (r == 2) 
+                              {
+                                 cell.Value = instructorName;
+                                 cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#FFFF00"); // Yellow Highlight
+                              }
+                              else 
+                              {
+                                 cell.Value = "-DO-";
+                              }
+
+                              cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                              cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                              cell.Style.Alignment.WrapText = true;
+
+                              cell.Style.Border.LeftBorder = XLBorderStyleValues.Thin;
+                              cell.Style.Border.RightBorder = XLBorderStyleValues.Thin;
+
+                              if (r == 0) cell.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                              if (r == durationRows - 1) cell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                           }
+                     }
+                  }
+
+                  // 3. Class Load Table (Row 38 Onwards)
+                  int loadRow = 38;
+                  int totalUnits = 0;
+
+                  var uniqueCourses = schedules
+                     .Where(s => s.Course != null)
+                     .GroupBy(s => new { s.CourseId, s.Component })
+                     .Select(g => g.First())
+                     .ToList();
+
+                  foreach(var s in uniqueCourses)
+                  {
+                     string compLabel = s.Component.Contains("Lab") ? "Lab" : "Lec";
+                     ws.Cell(loadRow, 1).Value = $"{s.Course!.Code} ({compLabel})";
+                     
+                     // Merge B to D for Description
+                     var descRange = ws.Range(loadRow, 2, loadRow, 4);
+                     descRange.Merge();
+                     descRange.Value = s.Course.Name;
+                     descRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                     descRange.Style.Font.FontName = "Comic Sans MS"; // Requested Font
+
+                     // Column E for Units
+                     ws.Cell(loadRow, 5).Value = s.Course.Units;
+                     
+                     // Merge F to G for Instructor Name (Lastname, First Name)
+                     var instRange = ws.Range(loadRow, 6, loadRow, 7);
+                     instRange.Merge();
+                     if (s.Instructor != null)
+                     {
+                        instRange.Value = $"{s.Instructor.Surname}, {s.Instructor.FirstName}";
+                     }
+                     else
+                     {
+                        instRange.Value = "TBA";
+                     }
+                     instRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+
+                     totalUnits += s.Course.Units;
+                     loadRow++;
+                  }
+
+                  // 4. Inject Total Row at the bottom
+                  ws.Cell(loadRow, 4).Value = "Total";
+                  ws.Cell(loadRow, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                  ws.Cell(loadRow, 4).Style.Font.Bold = true;
+
+                  ws.Cell(loadRow, 5).Value = totalUnits;
+                  ws.Cell(loadRow, 5).Style.Font.Bold = true;
+
+                  workbook.SaveAs(savePath);
+               }
+
+               MessageBox.Show("Class Schedule exported successfully!", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+         }
+         catch (Exception ex)
+         {
+            MessageBox.Show($"Error during Excel generation: {ex.Message}\n\nPlease ensure your template is formatted correctly and isn't currently open.", "Export Failure", MessageBoxButton.OK, MessageBoxImage.Error);
+         }
+      }
+
    }
 }

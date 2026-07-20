@@ -542,8 +542,6 @@
                                             Click="ExporttoExcelBtn_Click">
                                         <Button.ContextMenu>
                                             <ContextMenu x:Name="ExportMenu">
-                                                <MenuItem Header="Export Standard Schedule (CSV)" Click="ExportStandard_Click"/>
-                                                <Separator/>
                                                 <MenuItem Header="Export Regular Teaching Load (Excel)" Click="ExportRegularTeachingLoad_Click"/>
                                                 <MenuItem Header="Export Teaching Overload (Excel)" Click="ExportTeachingOverload_Click"/>
                                             </ContextMenu>

@@ -71,6 +71,10 @@
                                 Style="{StaticResource MasterSchedButtonStyle}" 
                                 Margin="0,5,0,0"
                                 Click="OpenRoomExportSettings_Click"/>
+                        <Button Content="Class Schedule" 
+                                Style="{StaticResource MasterSchedButtonStyle}" 
+                                Margin="0,5,0,0"
+                                Click="OpenClassExportSettings_Click"/>        
                         <Button Content="Master Class Schedule" 
                                 Style="{StaticResource MasterSchedButtonStyle}" 
                                 Margin="0,5,0,0"
