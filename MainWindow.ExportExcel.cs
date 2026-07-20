@@ -725,8 +725,8 @@ namespace UniversityScheduler
 
                            string compLabel = schedule.Component.Contains("Lab") ? "Lab" : "Lec";
                            
-                           // NOTE: Per instructions, Row 2 is Section. Change this to schedule.Room?.Name if you want Room instead.
-                           string sectionName = schedule.Section != null ? schedule.Section.FullDisplayName : "TBA";
+                           // CHANGED: Grab the Room Name instead of the Section Name
+                           string roomName = schedule.Room != null ? schedule.Room.Name : "TBA";
 
                            for (int r = 0; r < durationRows; r++)
                            {
@@ -741,12 +741,14 @@ namespace UniversityScheduler
                               }
                               else if (r == 1) 
                               {
-                                 cell.Value = sectionName; 
+                                 // CHANGED: Output Room Name and apply Yellow Highlight
+                                 cell.Value = roomName; 
+                                 cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#FFFF00");
                               }
                               else if (r == 2) 
                               {
+                                 // CHANGED: Output Instructor Name (highlight removed)
                                  cell.Value = instructorName;
-                                 cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#FFFF00"); // Yellow Highlight
                               }
                               else 
                               {
