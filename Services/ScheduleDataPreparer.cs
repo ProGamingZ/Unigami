@@ -26,6 +26,8 @@ namespace UniversityScheduler.Services
 
             foreach (var inst in allInstructors)
             {
+                if (inst.IsScheduleLocked) continue;
+                
                 string sectionIdsStr = semester == 1 ? inst.AssignedSectionsSem1 : inst.AssignedSectionsSem2;
                 string courseCodesStr = semester == 1 ? inst.PreferredCourseCodesSem1 : inst.PreferredCourseCodesSem2;
 
