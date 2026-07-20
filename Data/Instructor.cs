@@ -20,7 +20,7 @@ namespace UniversityScheduler.Data
                 string t = string.IsNullOrWhiteSpace(Title) ? "" : $"{Title} ";
                 string m = string.IsNullOrWhiteSpace(MiddleName) ? "" : $" {MiddleName}";
                 string s = string.IsNullOrWhiteSpace(Suffix) ? "" : $" {Suffix}";
-                return $"{t}{FirstName}{m} {Surname}{s}".Trim();
+                return $"{t}{Surname}, {FirstName}{m}{s}".Trim();
             }
         }
         public string HomeAddress { get; set; } = string.Empty;
