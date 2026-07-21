@@ -137,7 +137,13 @@ namespace UniversityScheduler.Services
 
                         for (int i = 0; i < duration; i++)
                         {
-                            blocked.Add($"{s.RoomId}_{dayIdx}_{startSlot + i}");
+                            // Block the physical Room
+                            if (s.RoomId.HasValue) 
+                                blocked.Add($"R_{s.RoomId.Value}_{dayIdx}_{startSlot + i}");
+                            
+                            // Block the Student Section
+                            if (s.SectionId.HasValue) 
+                                blocked.Add($"S_{s.SectionId.Value}_{dayIdx}_{startSlot + i}");
                         }
                     }
                 }
@@ -159,7 +165,7 @@ namespace UniversityScheduler.Services
                 int duration = task.Duration30MinBlocks;
                 bool isLab = task.Component == "Lab" || task.Component == "Practicum";
 
-                // --- NEW: Find assigned instructors for this exact task ---
+                // Find assigned instructors for this exact task 
                 var assignedInstructors = instructors.Where(i => IsTaskAssignedToInstructor(i, task, semester)).ToList();
 
                 // A. Find Valid Rooms
@@ -185,15 +191,20 @@ namespace UniversityScheduler.Services
                             if (settings.AvoidLunchBreak && !isLab && lunchSlots.Any(l => l >= slot && l < slot + duration))
                                 continue;
 
-                            // Check Blocked Slots
+                            // Check Blocked Slots (Rooms AND Sections)
                             bool isBlocked = false;
                             for (int d = 0; d < duration; d++)
                             {
-                                if (blockedSlots.Contains($"{room.Id}_{day}_{slot + d}")) { isBlocked = true; break; }
+                                // If the Room OR the Section is locked by another schedule, skip this time slot!
+                                if (blockedSlots.Contains($"R_{room.Id}_{day}_{slot + d}") || 
+                                    blockedSlots.Contains($"S_{task.SectionId}_{day}_{slot + d}")) 
+                                { 
+                                    isBlocked = true; 
+                                    break; 
+                                }
                             }
                             if (isBlocked) continue;
 
-                            // --- NEW: STRICT INSTRUCTOR TIME OVERRIDE ---
                             // The AI physically cannot generate a class at a time the assigned instructor is not available.
                             if (assignedInstructors.Count > 0)
                             {
